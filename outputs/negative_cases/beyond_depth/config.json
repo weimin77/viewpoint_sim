@@ -184,7 +184,10 @@
     "min_valid_depth_fraction": 0.98,
     "min_food_pixels": 100,
     "min_food_bbox_side_px": 6,
-    "crop_padding_px": 10
+    "crop": {
+      "enabled": false,
+      "padding_px": 10
+    }
   },
   "scene": {
     "table": {

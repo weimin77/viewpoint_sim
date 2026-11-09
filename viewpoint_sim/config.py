@@ -47,6 +47,13 @@ def validate_config(cfg):
         raise ValueError("Invalid collision parameters")
     if cfg["motion"].get("replay_speed_rad_per_s", 1.) <= 0 or cfg["motion"].get("replay_pause_seconds", 0.) < 0:
         raise ValueError("Invalid replay timing parameters")
+    crop = cfg["quality"].get("crop")
+    if crop is not None:
+        if not isinstance(crop.get("enabled", False), bool):
+            raise ValueError("quality.crop.enabled must be a boolean")
+        padding = crop.get("padding_px", cfg["quality"].get("crop_padding_px", 10))
+        if padding < 0 or padding >= min(cfg["camera"]["rgb"]["width"], cfg["camera"]["rgb"]["height"])/2:
+            raise ValueError("Invalid quality.crop.padding_px")
     for f in cfg["scene"]["foods"]:
         half = np.asarray(f["size_m"]) / 2 if f["shape"] == "box" else np.repeat(f["radius_m"], 3)
         p = np.asarray(f["position_B_m"])
@@ -58,6 +65,19 @@ def validate_config(cfg):
 def mount_transform(cfg):
     m = cfg["camera"]["mount"]
     return transform(m["translation_F_m"], m["rpy_FC_rad"])
+
+
+def crop_settings(cfg):
+    """Return (enabled, padding_px) for the optional joint Food+Tray crop.
+
+    `quality.crop_padding_px` is the pre-0.2 spelling and is still honoured as
+    the fallback padding so older result configs keep loading.
+    """
+    quality = cfg.get("quality", {})
+    crop = quality.get("crop") or {}
+    enabled = bool(crop.get("enabled", False))
+    padding = crop.get("padding_px", quality.get("crop_padding_px", 10))
+    return enabled, float(padding)
 
 
 def clone(cfg):

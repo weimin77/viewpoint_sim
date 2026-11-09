@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "created_utc": "2026-11-09T03:34:52.199387+00:00",
+  "created_utc": "2026-11-09T07:09:31.333290+00:00",
   "seed": 20261106,
   "complete": false,
   "accepted_total": 0,
@@ -18,7 +18,7 @@
     }
   ],
   "minimum_axis_angle_deg": null,
-  "elapsed_seconds": 5.226207357000021,
+  "elapsed_seconds": 5.08866704400134,
   "simulation_limits": [
     "Kinematic motion; no dynamics/controller settling",
     "Ideal aligned undistorted RGB-D; no stereo matching/noise/material physics",

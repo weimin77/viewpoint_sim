@@ -80,6 +80,27 @@ class WorldTests(unittest.TestCase):
             p.removeBody(obstacle,physicsClientId=w.cid)
             w.environment.remove(obstacle)
 
+    def test_capture_exports_follow_crop_switch(self):
+        import copy, tempfile
+        from pathlib import Path
+        from PIL import Image
+        from viewpoint_sim.acquisition import save_capture
+        from viewpoint_sim.planner import geometry_check
+        w=self.world;w.set_q(self.sol);cap=inspect_capture(w,w.camera_pose())
+        geo,reason=geometry_check(w.cfg,w.camera_pose(),1);self.assertIsNone(reason)
+        cam=(w.cfg['camera']['rgb']['width'],w.cfg['camera']['rgb']['height'])
+        for enabled in (False,True):
+            cfg=copy.deepcopy(w.cfg);cfg['quality']['crop']={'enabled':enabled,'padding_px':10}
+            with tempfile.TemporaryDirectory() as d:
+                record=save_capture(Path(d)/'v',dict(cap),{'id':'v','height_index':1},geo,cfg)
+                folder=Path(d)/'v';files=sorted(p.name for p in folder.iterdir())
+                self.assertEqual(any(n.startswith('crop_') for n in files),enabled)
+                for name in ('rgb','depth_mm','instance','food_mask'):
+                    self.assertEqual(Image.open(folder/(name+'.png')).size,cam)
+                self.assertEqual(record['image_size_xy'],list(cam))
+                self.assertIn('roi_bbox_xyxy',record)
+                self.assertEqual('crop_bbox_xyxy' in record,enabled)
+
     def test_nonadjacent_arm_self_collision_is_rejected(self):
         q=np.array([1.908605,-.440094,.257679,-2.454708,1.427248,.23887])
         self.assertTrue(self.world.collision(q).startswith('self_collision'))

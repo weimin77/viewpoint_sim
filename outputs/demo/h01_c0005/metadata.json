@@ -287,27 +287,17 @@
       "min_bbox_side_px": 40
     }
   ],
-  "crop_bbox_xyxy": [
-    171,
-    70,
-    472,
-    286
+  "image_size_xy": [
+    640,
+    360
   ],
-  "crop_bbox_xywh": [
-    171,
-    70,
-    301,
-    216
+  "roi_bbox_xyxy": [
+    181,
+    80,
+    462,
+    276
   ],
-  "K_crop": {
-    "width": 301,
-    "height": 216,
-    "fx": 337.2,
-    "fy": 324.7,
-    "cx": 148.5,
-    "cy": 109.5
-  },
-  "tray_ratio_cropped": 0.6285537119748572,
+  "crop_enabled": false,
   "label_definition": "Visible surfaces; 0=background, IDs 1..N in config scene.foods order",
   "depth_definition": "Optical Z; PNG uint16 millimeters, 0 invalid; NPY geometric float32 meters before range masking"
 }

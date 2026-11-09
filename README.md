@@ -22,7 +22,7 @@
 | 视角多样性 | 光轴最小夹角，可跨高度去重；使用实际 FK 位姿复核 | `planner.py` |
 | 食材实际可见性 | 完整场景可见像素 / 单食材独立渲染轮廓，含食材间互相遮挡 | `acquisition.py` |
 | 到位、采集与质量检查 | 沿已验路径进行运动学回放、FK 到位误差复核、理想图像质量验收 | `planner.py` |
-| 联合裁剪 | Food + Tray 投影外接框，同步裁剪 RGB、Depth、Mask，更新主点 | `acquisition.py` |
+| 输出尺寸 | 始终输出全幅 640×360；联合裁剪为可选附加产物（默认关闭）| `acquisition.py` |
 | 高度变化方式对比 | 相同 XY 的直接平移与重新 Look-at；仅做几何对比，标注未做机器人检查 | `height_comparison.json` |
 | 不足 N 个有效位姿 | 输出失败统计、`complete=false`，命令退出码 2，保留合格样本 | `summary.json` |
 
@@ -85,7 +85,7 @@ Windows 启动脚本已提供，尚未在本次 Linux 执行环境中运行验�
 
 ### 浏览输出
 
-运行后双击 `outputs/my_run/report.html`。页面不依赖 CDN、服务器或联网，可切换高度、查看工位图、相机投影、RGB、Mask、裁剪结果、质量指标和拒绝原因。
+运行后双击 `outputs/my_run/report.html`。页面不依赖 CDN、服务器或联网，可切换高度、查看工位图、相机投影、RGB、Mask、质量指标和拒绝原因；开启裁剪时还会多出「裁剪」标签页。
 
 ## 3. 默认场景与需要替换的参数
 
@@ -106,6 +106,7 @@ Windows 启动脚本已提供，尚未在本次 Linux 执行环境中运行验�
 | 视角去重 | 至少 6°，跨高度生效 |
 | 每高度数量 | 4，最多尝试 250 次 |
 | 图像边距 | 水平、竖直各 10% |
+| 输出裁剪 | 默认关闭（全幅输出）；`quality.crop.padding_px=10` 仅在内边距开启时生效 |
 | 可见率阈值 | 每块食材至少 90% 的独立投影轮廓可见 |
 | 路径碰撞 | 2 mm 间隙；关节插值最大步长 0.025 rad |
 | 回放 | 关节空间恒速 1.2 rad/s；每个采集位姿停顿 0.5 s |
@@ -142,20 +143,22 @@ Windows 启动脚本已提供，尚未在本次 Linux 执行环境中运行验�
 | `depth_z_m.npy` | float32，渲染的几何光学 Z 米值，尚未按量程置零 |
 | `instance.png` | uint16，可见实例 ID；0=背景，1..N 对应配置食材顺序 |
 | `food_mask.png` | 二值可见食材 Mask |
-| `crop_*.png` | 同一裁剪框下的 RGB、Depth、实例与二值 Mask |
+| `crop_*.png` | **可选**：`quality.crop.enabled=true` 时额外输出的联合裁剪 RGB、Depth、实例与二值 Mask；默认不生成 |
 | `overlay.png` | Food/Tray ROI 投影与裁剪框 |
 | `overview.png` | 拍照时机械臂和工位的第三人称渲染 |
-| `metadata.json` | 目标/实际相机和法兰位姿、安装外参、关节角、路径、内参、裁剪框、质量指标 |
+| `metadata.json` | 目标/实际相机和法兰位姿、安装外参、关节角、路径、内参、`image_size_xy`、`roi_bbox_xyxy`、质量指标；开启裁剪时另有 `crop_bbox_*` / `K_crop` / `tray_ratio_cropped` |
 
 运行根目录保存 `config.json`、`views.json`、`summary.json`、`candidates.jsonl`、`height_comparison.json` 和 `report.html`。
 
-`crop_bbox_xyxy` 的右下边界为 Python 切片的排他边界。裁剪不做缩放；主点按裁剪偏移更新，焦距不变。Mask 表示实际可见表面，不包含被遮住区域的推测标签。
+主输出 `rgb.png` / `depth_mm.png` / `instance.png` / `food_mask.png` **始终是全幅**，尺寸恒等于 `camera.rgb` 配置，因此每个视点的图像尺寸完全一致。`roi_bbox_xyxy` 是 Food + Tray 投影的并集外接框（仅记录，不裁剪），可直接用于下游定位。
+
+裁剪是可选项：`quality.crop.enabled` 为 `true` 时额外输出 `crop_*`，其外接框 = `roi_bbox_xyxy` 加 `quality.crop.padding_px` 内边距并夹到图像边界，因此**裁剪尺寸逐视点不同**。裁剪不做缩放；主点按裁剪偏移更新，焦距不变。Mask 表示实际可见表面，不包含被遮住区域的推测标签。
 
 若调整模型细节，建议把关节插值步长减半后重新验证关键路径。离散采样不能证明两个检测采样点之间不存在穿透。
 
 ## 5. 已执行的验证
 
-本次默认种子 `20261106`，三个高度共采到 12 个视点。每个样本都重新检查了实际 FK 位姿、整段路径、深度范围、可见性和裁剪一致性。
+本次默认种子 `20261106`，三个高度共采到 12 个视点。每个样本都重新检查了实际 FK 位姿、整段路径、深度范围、可见性、全幅尺寸一致性、Mask/深度一致性，以及裁剪开关的两端行为。
 
 验证命令：
 
@@ -170,7 +173,7 @@ Windows 启动脚本已提供，尚未在本次 Linux 执行环境中运行验�
 .venv/bin/python -m viewpoint_sim replay --result outputs/demo --headless --gif outputs/my_preview.gif
 ```
 
-测试含：Look-at 退化、非零安装外参、凸包完整入镜、多边形裁切、裁剪主点更新、光学深度、偏置主点渲染、遮挡、自碰撞/环境碰撞、终点均安全但中段碰撞，以及 RRT 绕行。`docs/validation.md` 记录本次结果。
+测试含：Look-at 退化、非零安装外参、凸包完整入镜、多边形裁切、裁剪主点更新、裁剪开关默认值与旧配置兜底、全幅导出尺寸、光学深度、偏置主点渲染、遮挡、自碰撞/环境碰撞、终点均安全但中段碰撞，以及 RRT 绕行。`docs/validation.md` 记录本次结果。
 
 ## 6. 仿真的边界
 

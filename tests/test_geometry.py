@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
-from viewpoint_sim.config import load_config, mount_transform
+import copy
+from viewpoint_sim.config import load_config, mount_transform, validate_config, crop_settings
 from viewpoint_sim.geometry import (look_at, transform, inv, apply, project, box_vertices,
     image_contains, clip_polygon, polygon_area, cropped_intrinsics, crop_box)
 from viewpoint_sim.planner import geometry_check
@@ -63,6 +64,23 @@ class GeometryTests(unittest.TestCase):
             geo,reason=geometry_check(CFG,T,0)
             self.assertIsNone(geo)
             self.assertIn(reason,['food_out_of_rgb_fov','depth_range'])
+
+    def test_crop_switch_defaults_off_and_keeps_legacy_padding(self):
+        cfg = load_config()
+        self.assertEqual(crop_settings(cfg), (False, 10.))
+        enabled = copy.deepcopy(cfg)
+        enabled['quality']['crop'] = {'enabled': True, 'padding_px': 12}
+        validate_config(enabled)
+        self.assertEqual(crop_settings(enabled), (True, 12.))
+        legacy = copy.deepcopy(cfg)
+        legacy['quality'].pop('crop')
+        legacy['quality']['crop_padding_px'] = 7
+        validate_config(legacy)
+        self.assertEqual(crop_settings(legacy), (False, 7.))
+        bad = copy.deepcopy(cfg)
+        bad['quality']['crop'] = {'enabled': True, 'padding_px': 400}
+        with self.assertRaises(ValueError):
+            validate_config(bad)
 
     def test_relook_keeps_target_centered_on_height_change(self):
         c=CFG['camera']['rgb'];target=CENTER[None,:]

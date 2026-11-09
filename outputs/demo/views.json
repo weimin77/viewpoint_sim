@@ -288,27 +288,17 @@
         "min_bbox_side_px": 53
       }
     ],
-    "crop_bbox_xyxy": [
-      118,
-      42,
-      537,
-      327
+    "image_size_xy": [
+      640,
+      360
     ],
-    "crop_bbox_xywh": [
-      118,
-      42,
-      419,
-      285
+    "roi_bbox_xyxy": [
+      128,
+      52,
+      527,
+      317
     ],
-    "K_crop": {
-      "width": 419,
-      "height": 285,
-      "fx": 337.2,
-      "fy": 324.7,
-      "cx": 201.5,
-      "cy": 137.5
-    },
-    "tray_ratio_cropped": 0.5031900651600165,
+    "crop_enabled": false,
     "label_definition": "Visible surfaces; 0=background, IDs 1..N in config scene.foods order",
     "depth_definition": "Optical Z; PNG uint16 millimeters, 0 invalid; NPY geometric float32 meters before range masking"
   },
@@ -601,27 +591,17 @@
         "min_bbox_side_px": 59
       }
     ],
-    "crop_bbox_xyxy": [
-      106,
-      41,
-      540,
-      318
+    "image_size_xy": [
+      640,
+      360
     ],
-    "crop_bbox_xywh": [
-      106,
-      41,
-      434,
-      277
+    "roi_bbox_xyxy": [
+      116,
+      51,
+      530,
+      308
     ],
-    "K_crop": {
-      "width": 434,
-      "height": 277,
-      "fx": 337.2,
-      "fy": 324.7,
-      "cx": 213.5,
-      "cy": 138.5
-    },
-    "tray_ratio_cropped": 0.5227907791634075,
+    "crop_enabled": false,
     "label_definition": "Visible surfaces; 0=background, IDs 1..N in config scene.foods order",
     "depth_definition": "Optical Z; PNG uint16 millimeters, 0 invalid; NPY geometric float32 meters before range masking"
   },
@@ -914,27 +894,17 @@
         "min_bbox_side_px": 58
       }
     ],
-    "crop_bbox_xyxy": [
-      120,
-      36,
-      535,
-      331
+    "image_size_xy": [
+      640,
+      360
     ],
-    "crop_bbox_xywh": [
-      120,
-      36,
-      415,
-      295
+    "roi_bbox_xyxy": [
+      130,
+      46,
+      525,
+      321
     ],
-    "K_crop": {
-      "width": 415,
-      "height": 295,
-      "fx": 337.2,
-      "fy": 324.7,
-      "cx": 199.5,
-      "cy": 143.5
-    },
-    "tray_ratio_cropped": 0.5414811154761126,
+    "crop_enabled": false,
     "label_definition": "Visible surfaces; 0=background, IDs 1..N in config scene.foods order",
     "depth_definition": "Optical Z; PNG uint16 millimeters, 0 invalid; NPY geometric float32 meters before range masking"
   },
@@ -1227,27 +1197,17 @@
         "min_bbox_side_px": 59
       }
     ],
-    "crop_bbox_xyxy": [
-      100,
-      41,
-      527,
-      325
+    "image_size_xy": [
+      640,
+      360
     ],
-    "crop_bbox_xywh": [
-      100,
-      41,
-      427,
-      284
+    "roi_bbox_xyxy": [
+      110,
+      51,
+      517,
+      315
     ],
-    "K_crop": {
-      "width": 427,
-      "height": 284,
-      "fx": 337.2,
-      "fy": 324.7,
-      "cx": 219.5,
-      "cy": 138.5
-    },
-    "tray_ratio_cropped": 0.5118735217995953,
+    "crop_enabled": false,
     "label_definition": "Visible surfaces; 0=background, IDs 1..N in config scene.foods order",
     "depth_definition": "Optical Z; PNG uint16 millimeters, 0 invalid; NPY geometric float32 meters before range masking"
   },
@@ -1540,27 +1500,17 @@
         "min_bbox_side_px": 38
       }
     ],
-    "crop_bbox_xyxy": [
-      166,
-      70,
-      477,
-      287
+    "image_size_xy": [
+      640,
+      360
     ],
-    "crop_bbox_xywh": [
-      166,
-      70,
-      311,
-      217
+    "roi_bbox_xyxy": [
+      176,
+      80,
+      467,
+      277
     ],
-    "K_crop": {
-      "width": 311,
-      "height": 217,
-      "fx": 337.2,
-      "fy": 324.7,
-      "cx": 153.5,
-      "cy": 109.5
-    },
-    "tray_ratio_cropped": 0.5936540779037172,
+    "crop_enabled": false,
     "label_definition": "Visible surfaces; 0=background, IDs 1..N in config scene.foods order",
     "depth_definition": "Optical Z; PNG uint16 millimeters, 0 invalid; NPY geometric float32 meters before range masking"
   },
@@ -1853,27 +1803,17 @@
         "min_bbox_side_px": 40
       }
     ],
-    "crop_bbox_xyxy": [
-      171,
-      70,
-      472,
-      286
+    "image_size_xy": [
+      640,
+      360
     ],
-    "crop_bbox_xywh": [
-      171,
-      70,
-      301,
-      216
+    "roi_bbox_xyxy": [
+      181,
+      80,
+      462,
+      276
     ],
-    "K_crop": {
-      "width": 301,
-      "height": 216,
-      "fx": 337.2,
-      "fy": 324.7,
-      "cx": 148.5,
-      "cy": 109.5
-    },
-    "tray_ratio_cropped": 0.6285537119748572,
+    "crop_enabled": false,
     "label_definition": "Visible surfaces; 0=background, IDs 1..N in config scene.foods order",
     "depth_definition": "Optical Z; PNG uint16 millimeters, 0 invalid; NPY geometric float32 meters before range masking"
   },
@@ -2166,27 +2106,17 @@
         "min_bbox_side_px": 43
       }
     ],
-    "crop_bbox_xyxy": [
-      165,
-      73,
-      472,
-      292
+    "image_size_xy": [
+      640,
+      360
     ],
-    "crop_bbox_xywh": [
-      165,
-      73,
-      307,
-      219
+    "roi_bbox_xyxy": [
+      175,
+      83,
+      462,
+      282
     ],
-    "K_crop": {
-      "width": 307,
-      "height": 219,
-      "fx": 337.2,
-      "fy": 324.7,
-      "cx": 154.5,
-      "cy": 106.5
-    },
-    "tray_ratio_cropped": 0.5956859097007736,
+    "crop_enabled": false,
     "label_definition": "Visible surfaces; 0=background, IDs 1..N in config scene.foods order",
     "depth_definition": "Optical Z; PNG uint16 millimeters, 0 invalid; NPY geometric float32 meters before range masking"
   },
@@ -2479,27 +2409,17 @@
         "min_bbox_side_px": 37
       }
     ],
-    "crop_bbox_xyxy": [
-      163,
-      74,
-      476,
-      285
+    "image_size_xy": [
+      640,
+      360
     ],
-    "crop_bbox_xywh": [
-      163,
-      74,
-      313,
-      211
+    "roi_bbox_xyxy": [
+      173,
+      84,
+      466,
+      275
     ],
-    "K_crop": {
-      "width": 313,
-      "height": 211,
-      "fx": 337.2,
-      "fy": 324.7,
-      "cx": 156.5,
-      "cy": 105.5
-    },
-    "tray_ratio_cropped": 0.6212313368529752,
+    "crop_enabled": false,
     "label_definition": "Visible surfaces; 0=background, IDs 1..N in config scene.foods order",
     "depth_definition": "Optical Z; PNG uint16 millimeters, 0 invalid; NPY geometric float32 meters before range masking"
   },
@@ -2792,27 +2712,17 @@
         "min_bbox_side_px": 35
       }
     ],
-    "crop_bbox_xyxy": [
-      195,
-      91,
-      445,
-      265
+    "image_size_xy": [
+      640,
+      360
     ],
-    "crop_bbox_xywh": [
-      195,
-      91,
-      250,
-      174
+    "roi_bbox_xyxy": [
+      205,
+      101,
+      435,
+      255
     ],
-    "K_crop": {
-      "width": 250,
-      "height": 174,
-      "fx": 337.2,
-      "fy": 324.7,
-      "cx": 124.5,
-      "cy": 88.5
-    },
-    "tray_ratio_cropped": 0.6290729171851009,
+    "crop_enabled": false,
     "label_definition": "Visible surfaces; 0=background, IDs 1..N in config scene.foods order",
     "depth_definition": "Optical Z; PNG uint16 millimeters, 0 invalid; NPY geometric float32 meters before range masking"
   },
@@ -3105,27 +3015,17 @@
         "min_bbox_side_px": 32
       }
     ],
-    "crop_bbox_xyxy": [
-      199,
-      95,
-      442,
-      265
+    "image_size_xy": [
+      640,
+      360
     ],
-    "crop_bbox_xywh": [
-      199,
-      95,
-      243,
-      170
+    "roi_bbox_xyxy": [
+      209,
+      105,
+      432,
+      255
     ],
-    "K_crop": {
-      "width": 243,
-      "height": 170,
-      "fx": 337.2,
-      "fy": 324.7,
-      "cx": 120.5,
-      "cy": 84.5
-    },
-    "tray_ratio_cropped": 0.6823975024382444,
+    "crop_enabled": false,
     "label_definition": "Visible surfaces; 0=background, IDs 1..N in config scene.foods order",
     "depth_definition": "Optical Z; PNG uint16 millimeters, 0 invalid; NPY geometric float32 meters before range masking"
   },
@@ -3418,27 +3318,17 @@
         "min_bbox_side_px": 30
       }
     ],
-    "crop_bbox_xyxy": [
-      199,
-      89,
-      441,
-      268
+    "image_size_xy": [
+      640,
+      360
     ],
-    "crop_bbox_xywh": [
-      199,
-      89,
-      242,
-      179
+    "roi_bbox_xyxy": [
+      209,
+      99,
+      431,
+      258
     ],
-    "K_crop": {
-      "width": 242,
-      "height": 179,
-      "fx": 337.2,
-      "fy": 324.7,
-      "cx": 120.5,
-      "cy": 90.5
-    },
-    "tray_ratio_cropped": 0.6046819747330292,
+    "crop_enabled": false,
     "label_definition": "Visible surfaces; 0=background, IDs 1..N in config scene.foods order",
     "depth_definition": "Optical Z; PNG uint16 millimeters, 0 invalid; NPY geometric float32 meters before range masking"
   },
@@ -3731,27 +3621,17 @@
         "min_bbox_side_px": 32
       }
     ],
-    "crop_bbox_xyxy": [
-      200,
-      92,
-      441,
-      271
+    "image_size_xy": [
+      640,
+      360
     ],
-    "crop_bbox_xywh": [
-      200,
-      92,
-      241,
-      179
+    "roi_bbox_xyxy": [
+      210,
+      102,
+      431,
+      261
     ],
-    "K_crop": {
-      "width": 241,
-      "height": 179,
-      "fx": 337.2,
-      "fy": 324.7,
-      "cx": 119.5,
-      "cy": 87.5
-    },
-    "tray_ratio_cropped": 0.6075273961770841,
+    "crop_enabled": false,
     "label_definition": "Visible surfaces; 0=background, IDs 1..N in config scene.foods order",
     "depth_definition": "Optical Z; PNG uint16 millimeters, 0 invalid; NPY geometric float32 meters before range masking"
   }

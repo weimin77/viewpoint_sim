@@ -77,6 +77,11 @@ class World:
             p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0, physicsClientId=self.cid)
             p.resetDebugVisualizerCamera(.62, 45, -28, [.16,0,.10], physicsClientId=self.cid)
             self.draw_scene()
+            # The side panel with PyBullet's own hints is disabled above; PyBullet
+            # only moves the camera while a modifier key is held.
+            print("Camera: Ctrl/Alt + left drag = rotate, Ctrl/Alt + middle drag = pan, "
+                  "Ctrl + right drag or wheel = zoom (PyBullet clamps distance to >= 1.0 m)",
+                  flush=True)
 
     def draw_scene(self):
         roi=self.cfg['roi'];s=self.cfg['sampling']

@@ -54,7 +54,18 @@ bash scripts/setup.sh
 .venv/bin/python -m viewpoint_sim run --gui --output outputs/gui_run
 ```
 
-GUI 中可旋转、平移和缩放观察工位；绿色线框为 Food ROI，黄色为 Tray ROI，蓝色矩形为各采样高度，绿色小视锥为拍照视点。规划查询会临时改变关节状态；检查实际运动时使用 `replay`。
+绿色线框为 Food ROI，黄色为 Tray ROI，蓝色矩形为各采样高度，绿色小视锥为拍照视点。规划查询会临时改变关节状态；检查实际运动时使用 `replay`。
+
+GUI 视角操作（PyBullet 仅在按住修饰键时移动相机，`run --gui` 与 `replay` 都适用）：
+
+| 操作 | 效果 |
+|---|---|
+| `Ctrl` 或 `Alt` + 左键拖动 | 绕观察点旋转（改变 yaw / pitch）|
+| `Ctrl` 或 `Alt` + 中键拖动 | 平移观察点（沿屏幕上下、左右移动视野）|
+| `Ctrl` + 右键拖动 | 拉近 / 拉远（改变相机到观察点的距离）|
+| 滚轮 | 拉远 / 拉近 |
+
+不按修饰键时左键拖动不会旋转视角，也不会拖动场景物体。PyBullet 把相机距离钳制在 `[1, 1000]` 米，默认初始距离 0.62 m 已小于下限，所以第一次“放大”会先跳到 1.0 m 再继续。缩放和旋转在动画播放期间同样有效；`replay` 只在启动时设置一次相机，不会覆盖你调整后的视角。
 
 `replay` 按 `motion.replay_speed_rad_per_s`（默认 1.2 rad/s）在关节空间恒速播放，到达每个采集位姿后停顿 `motion.replay_pause_seconds`（默认 0.5 s），此时绘制视锥。路径碰撞复核在独立的无窗口 PyBullet 客户端上完成，因此复核不会让可见机器人在动画开始前先瞬移到轨迹终点。
 

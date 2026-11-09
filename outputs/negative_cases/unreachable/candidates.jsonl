@@ -1,0 +1,8 @@
+{"id": "h00_c0001", "height_above_tray_m": 0.3, "eye_B_m": [0.4038426954972102, 0.13699922653299287, 0.32], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0002", "height_above_tray_m": 0.3, "eye_B_m": [0.3622116742079936, 0.12367139586344564, 0.32], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0003", "height_above_tray_m": 0.3, "eye_B_m": [0.4508805156896943, 0.053926965336647925, 0.32], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0004", "height_above_tray_m": 0.3, "eye_B_m": [0.36240575847966205, -0.149159150508573, 0.32], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0005", "height_above_tray_m": 0.3, "eye_B_m": [0.29781497261771306, -0.14071297181979703, 0.32], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0006", "height_above_tray_m": 0.3, "eye_B_m": [0.3051675540813864, 0.10052142812182854, 0.32], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0007", "height_above_tray_m": 0.3, "eye_B_m": [0.2840438463556485, 0.04688839265736566, 0.32], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0008", "height_above_tray_m": 0.3, "eye_B_m": [0.24502370866883894, -0.14010577696587928, 0.32], "accepted": false, "reason": "ik_or_singularity"}

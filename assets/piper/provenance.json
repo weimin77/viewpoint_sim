@@ -1,0 +1,71 @@
+{
+  "repository": "https://github.com/agilexrobotics/piper_ros",
+  "commit": "ac41fcbcdda598f01b51cf6175ed9a24d0dacadc",
+  "files": [
+    {
+      "file": "LICENSE",
+      "sha256": "e32d78fd3761052ab0b2bb42fef8a7a9ad3f298d315d305333c349d2aff1f134",
+      "bytes": 1065,
+      "source": "https://raw.githubusercontent.com/agilexrobotics/piper_ros/ac41fcbcdda598f01b51cf6175ed9a24d0dacadc/LICENSE"
+    },
+    {
+      "file": "original.urdf",
+      "sha256": "c1a5c29ae9b91160557ed02bddd47365a71f0eb1653abb4997eb34f124021486",
+      "bytes": 13435,
+      "source": "https://raw.githubusercontent.com/agilexrobotics/piper_ros/ac41fcbcdda598f01b51cf6175ed9a24d0dacadc/src/piper_description/urdf/piper_description.urdf"
+    },
+    {
+      "file": "meshes/base_link.STL",
+      "sha256": "fd4a3d6d0266205fe3f725f048645be66592c23564db22e08b0807d5569b2c64",
+      "bytes": 607384,
+      "source": "https://raw.githubusercontent.com/agilexrobotics/piper_ros/ac41fcbcdda598f01b51cf6175ed9a24d0dacadc/src/piper_description/meshes/base_link.STL"
+    },
+    {
+      "file": "meshes/link1.STL",
+      "sha256": "9ee6e1d67c0241f42a0dbaf5c676d19230375ed078ee1943bb8c4c37ab303d14",
+      "bytes": 447784,
+      "source": "https://raw.githubusercontent.com/agilexrobotics/piper_ros/ac41fcbcdda598f01b51cf6175ed9a24d0dacadc/src/piper_description/meshes/link1.STL"
+    },
+    {
+      "file": "meshes/link2.STL",
+      "sha256": "0d37675b699b643f2e15348de99aed535fac10dc5f09a79b8e4b0acfaf4e0378",
+      "bytes": 3658384,
+      "source": "https://raw.githubusercontent.com/agilexrobotics/piper_ros/ac41fcbcdda598f01b51cf6175ed9a24d0dacadc/src/piper_description/meshes/link2.STL"
+    },
+    {
+      "file": "meshes/link3.STL",
+      "sha256": "e8ae51f17c0c7f6d67b753922e2cc269f5e8372a65734f859231639a64fe8fad",
+      "bytes": 1845784,
+      "source": "https://raw.githubusercontent.com/agilexrobotics/piper_ros/ac41fcbcdda598f01b51cf6175ed9a24d0dacadc/src/piper_description/meshes/link3.STL"
+    },
+    {
+      "file": "meshes/link4.STL",
+      "sha256": "efa33022976218f246f736a6133494b5d0e5486e8b50b52900c42f285ae85558",
+      "bytes": 877984,
+      "source": "https://raw.githubusercontent.com/agilexrobotics/piper_ros/ac41fcbcdda598f01b51cf6175ed9a24d0dacadc/src/piper_description/meshes/link4.STL"
+    },
+    {
+      "file": "meshes/link5.STL",
+      "sha256": "a1c69d1c7f6f8c60e2c82331c0f444725200ed4053d3e5ec23aa82cb5db5b29f",
+      "bytes": 833684,
+      "source": "https://raw.githubusercontent.com/agilexrobotics/piper_ros/ac41fcbcdda598f01b51cf6175ed9a24d0dacadc/src/piper_description/meshes/link5.STL"
+    },
+    {
+      "file": "meshes/link6.STL",
+      "sha256": "88374973bc3bd9e7389b5853cd6e555af9731c30b658b1ee6f85be34a126cb92",
+      "bytes": 58884,
+      "source": "https://raw.githubusercontent.com/agilexrobotics/piper_ros/ac41fcbcdda598f01b51cf6175ed9a24d0dacadc/src/piper_description/meshes/link6.STL"
+    },
+    {
+      "file": "piper.srdf",
+      "sha256": "44214d4f1b28e39f00afaad4da143ae4f2e4f53bb2e033bad3f426a326a778b4",
+      "bytes": 3155,
+      "source": "https://raw.githubusercontent.com/agilexrobotics/piper_ros/ac41fcbcdda598f01b51cf6175ed9a24d0dacadc/src/piper_moveit/piper_no_gripper_moveit/config/piper_description.srdf"
+    }
+  ],
+  "local_modifications": [
+    "piper.urdf: remove gripper links/joints; rewrite package mesh URLs to relative paths; add zero-mass inertial to dummy_link.",
+    "All six arm joint origins, axes, and limits are unchanged.",
+    "Runtime camera/bracket fixed links are generated in a temporary URDF."
+  ]
+}

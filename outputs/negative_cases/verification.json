@@ -1,0 +1,38 @@
+[
+  {
+    "case": "too_low",
+    "passed": true,
+    "rejections": {
+      "food_out_of_rgb_fov": 8
+    }
+  },
+  {
+    "case": "beyond_depth",
+    "passed": true,
+    "rejections": {
+      "depth_range": 8
+    }
+  },
+  {
+    "case": "impossible_tray_ratio",
+    "passed": true,
+    "rejections": {
+      "tray_ratio": 8
+    }
+  },
+  {
+    "case": "opaque_roof",
+    "passed": true,
+    "rejections": {
+      "occlusion": 7,
+      "ik_or_singularity": 1
+    }
+  },
+  {
+    "case": "unreachable",
+    "passed": true,
+    "rejections": {
+      "ik_or_singularity": 8
+    }
+  }
+]

@@ -1,0 +1,13 @@
+{"id": "h00_c0001", "height_above_tray_m": 0.3, "eye_B_m": [0.4038426954972102, 0.13699922653299287, 0.32], "accepted": true, "reason": "accepted", "folder": "h00_c0001", "tray_ratio": 0.281809224275471}
+{"id": "h00_c0002", "height_above_tray_m": 0.3, "eye_B_m": [0.3622116742079936, 0.12367139586344564, 0.32], "accepted": true, "reason": "accepted", "folder": "h00_c0002", "tray_ratio": 0.3018217014480029}
+{"id": "h00_c0003", "height_above_tray_m": 0.3, "eye_B_m": [0.4508805156896943, 0.053926965336647925, 0.32], "accepted": true, "reason": "accepted", "folder": "h00_c0003", "tray_ratio": 0.3177128158839489}
+{"id": "h00_c0004", "height_above_tray_m": 0.3, "eye_B_m": [0.36240575847966205, -0.149159150508573, 0.32], "accepted": true, "reason": "accepted", "folder": "h00_c0004", "tray_ratio": 0.277777231075947}
+{"id": "h01_c0001", "height_above_tray_m": 0.36, "eye_B_m": [0.29781497261771306, -0.14071297181979703, 0.38], "accepted": true, "reason": "accepted", "folder": "h01_c0001", "tray_ratio": 0.20619701818045744}
+{"id": "h01_c0002", "height_above_tray_m": 0.36, "eye_B_m": [0.3051675540813864, 0.10052142812182854, 0.38], "accepted": true, "reason": "accepted", "folder": "h01_c0002", "tray_ratio": 0.2264149418860719}
+{"id": "h01_c0003", "height_above_tray_m": 0.36, "eye_B_m": [0.2840438463556485, 0.04688839265736566, 0.38], "accepted": true, "reason": "accepted", "folder": "h01_c0003", "tray_ratio": 0.2391314905050781}
+{"id": "h01_c0004", "height_above_tray_m": 0.36, "eye_B_m": [0.24502370866883894, -0.14010577696587928, 0.38], "accepted": true, "reason": "accepted", "folder": "h01_c0004", "tray_ratio": 0.1934962080903343}
+{"id": "h02_c0001", "height_above_tray_m": 0.42, "eye_B_m": [0.21513460215285432, -0.09823291731495051, 0.44], "accepted": false, "reason": "depth_range"}
+{"id": "h02_c0002", "height_above_tray_m": 0.42, "eye_B_m": [0.2197324656432118, -0.013314195797783923, 0.44], "accepted": true, "reason": "accepted", "folder": "h02_c0002", "tray_ratio": 0.16585582092868062}
+{"id": "h02_c0003", "height_above_tray_m": 0.42, "eye_B_m": [0.21721706347835498, 0.05797152718756668, 0.44], "accepted": true, "reason": "accepted", "folder": "h02_c0003", "tray_ratio": 0.16146502083210212}
+{"id": "h02_c0004", "height_above_tray_m": 0.42, "eye_B_m": [0.2636427874811422, -0.12243644521846903, 0.44], "accepted": true, "reason": "accepted", "folder": "h02_c0004", "tray_ratio": 0.1589313082280013}
+{"id": "h02_c0005", "height_above_tray_m": 0.42, "eye_B_m": [0.33418063028045064, 0.07715461157750805, 0.44], "accepted": true, "reason": "accepted", "folder": "h02_c0005", "tray_ratio": 0.17762461523072237}

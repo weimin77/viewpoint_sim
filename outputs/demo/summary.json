@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-11-06T03:37:43.587063+00:00",
+  "seed": 20261106,
+  "complete": true,
+  "accepted_total": 12,
+  "heights": [
+    {
+      "height_above_tray_m": 0.3,
+      "accepted": 4,
+      "target": 4,
+      "attempts": 4,
+      "rejections": {},
+      "complete": true,
+      "acceptance_rate": 1.0
+    },
+    {
+      "height_above_tray_m": 0.36,
+      "accepted": 4,
+      "target": 4,
+      "attempts": 4,
+      "rejections": {},
+      "complete": true,
+      "acceptance_rate": 1.0
+    },
+    {
+      "height_above_tray_m": 0.42,
+      "accepted": 4,
+      "target": 4,
+      "attempts": 5,
+      "rejections": {
+        "depth_range": 1
+      },
+      "complete": true,
+      "acceptance_rate": 0.8
+    }
+  ],
+  "minimum_axis_angle_deg": 6.766889238143213,
+  "elapsed_seconds": 9.25270814300029,
+  "simulation_limits": [
+    "Kinematic motion; no dynamics/controller settling",
+    "Ideal aligned undistorted RGB-D; no stereo matching/noise/material physics",
+    "Discrete collision checking; not continuous swept-volume certification",
+    "Example workcell and camera extrinsics; replace with measured values"
+  ],
+  "view_ids_ranked_by_tray_ratio": {
+    "0.3": [
+      "h00_c0003",
+      "h00_c0002",
+      "h00_c0001",
+      "h00_c0004"
+    ],
+    "0.36": [
+      "h01_c0003",
+      "h01_c0002",
+      "h01_c0001",
+      "h01_c0004"
+    ],
+    "0.42": [
+      "h02_c0005",
+      "h02_c0002",
+      "h02_c0003",
+      "h02_c0004"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "food-viewpoint-sim"
+version = "0.1.0"
+description = "PiPER eye-in-hand constrained random RGB-D acquisition simulation"
+requires-python = ">=3.10,<3.12"
+dependencies = ["numpy>=1.24,<3", "scipy>=1.10,<2", "Pillow>=10,<13", "pybullet==3.2.7"]
+
+[project.scripts]
+viewpoint-sim = "viewpoint_sim.cli:main"
+
+[tool.setuptools]
+packages = ["viewpoint_sim", "viewpoint_sim.assets", "viewpoint_sim.configs"]
+
+[tool.setuptools.package-dir]
+"viewpoint_sim.assets" = "assets"
+"viewpoint_sim.configs" = "configs"
+
+[tool.setuptools.package-data]
+"viewpoint_sim.assets" = ["piper/*.urdf", "piper/*.srdf", "piper/*.json", "piper/LICENSE", "piper/meshes/*.STL", "fonts/*.woff", "fonts/*.txt", "fonts/*.json"]
+"viewpoint_sim.configs" = ["*.json"]

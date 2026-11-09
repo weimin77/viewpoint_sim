@@ -1,0 +1,2 @@
+pybullet build time: Jan 29 2025 23:17:20
+PASS: 12 saved views; image alignment, hand-eye transforms, heights, axes, and complete paths verified.

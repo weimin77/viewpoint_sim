@@ -1,0 +1,323 @@
+{
+  "units": "m_rad",
+  "description": "Example open-top workcell, bare PiPER with camera fixture; NOT measured hardware calibration",
+  "seed": 20261106,
+  "robot": {
+    "urdf": "assets/piper/piper.urdf",
+    "srdf": "assets/piper/piper.srdf",
+    "flange_link": "link6",
+    "base_position_B_m": [
+      0,
+      0,
+      0
+    ],
+    "home_q_rad": [
+      0,
+      0.8,
+      -1.0,
+      0,
+      0.5,
+      0
+    ],
+    "ik_starts": 8,
+    "ik_position_tolerance_m": 0.0005,
+    "ik_rotation_tolerance_deg": 0.1,
+    "joint_limit_margin_rad": 0.01,
+    "min_scaled_jacobian_singular_value": 0.003
+  },
+  "camera": {
+    "description": "D405-like ideal aligned undistorted pinhole; intrinsics estimated from nominal FOV, replace by SDK intrinsics",
+    "rgb": {
+      "width": 640,
+      "height": 360,
+      "fx": 337.2,
+      "fy": 324.7,
+      "cx": 319.5,
+      "cy": 179.5
+    },
+    "depth": {
+      "width": 640,
+      "height": 360,
+      "fx": 337.2,
+      "fy": 324.7,
+      "cx": 319.5,
+      "cy": 179.5
+    },
+    "T_CD": [
+      [
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1
+      ]
+    ],
+    "depth_range_m": [
+      0.07,
+      0.5
+    ],
+    "mount": {
+      "translation_F_m": [
+        0,
+        0,
+        0.07
+      ],
+      "rpy_FC_rad": [
+        3.141592653589793,
+        -1.5707963267948966,
+        0
+      ]
+    },
+    "housing_size_m": [
+      0.042,
+      0.042,
+      0.023
+    ],
+    "bracket_size_m": [
+      0.014,
+      0.014,
+      0.052
+    ]
+  },
+  "roi": {
+    "food_min_B": [
+      0.235,
+      -0.08,
+      0.02
+    ],
+    "food_max_B": [
+      0.465,
+      0.08,
+      0.09
+    ],
+    "margin_m": 0.003,
+    "tray_z_B_m": 0.02,
+    "tray_corners_B": [
+      [
+        0.2,
+        -0.115,
+        0.02
+      ],
+      [
+        0.5,
+        -0.115,
+        0.02
+      ],
+      [
+        0.5,
+        0.115,
+        0.02
+      ],
+      [
+        0.2,
+        0.115,
+        0.02
+      ]
+    ],
+    "teach_timestamp": "example-not-measured",
+    "tcp_probe_offset_m": [
+      0,
+      0,
+      0.1
+    ]
+  },
+  "sampling": {
+    "x_B_m": [
+      0.2,
+      0.47
+    ],
+    "y_B_m": [
+      -0.15,
+      0.15
+    ],
+    "heights_above_tray_m": [
+      0.3
+    ],
+    "target_per_height": 1,
+    "max_attempts_per_height": 8,
+    "max_tilt_deg": 40,
+    "min_axis_angle_deg": 6,
+    "deduplicate_across_heights": true,
+    "reference_up_B": [
+      0,
+      1,
+      0
+    ],
+    "image_margin_fraction": [
+      0.1,
+      0.1
+    ],
+    "tray_min_ratio_by_height": [
+      0
+    ]
+  },
+  "motion": {
+    "collision_margin_m": 0.002,
+    "edge_resolution_rad": 0.025,
+    "rrt_step_rad": 0.18,
+    "rrt_iterations": 500,
+    "replay_seconds_per_edge": 0.05
+  },
+  "quality": {
+    "min_visible_fraction_per_food": 0.9,
+    "min_valid_depth_fraction": 0.98,
+    "min_food_pixels": 100,
+    "min_food_bbox_side_px": 6,
+    "crop_padding_px": 10
+  },
+  "scene": {
+    "table": {
+      "position_B_m": [
+        0.25,
+        0,
+        -0.055
+      ],
+      "size_m": [
+        1.1,
+        0.85,
+        0.1
+      ]
+    },
+    "tray": {
+      "position_B_m": [
+        0.35,
+        0,
+        0.01
+      ],
+      "size_m": [
+        0.3,
+        0.23,
+        0.02
+      ]
+    },
+    "obstacles": [
+      {
+        "name": "left_wall",
+        "position_B_m": [
+          0.35,
+          -0.137,
+          0.075
+        ],
+        "size_m": [
+          0.34,
+          0.014,
+          0.15
+        ]
+      },
+      {
+        "name": "right_wall",
+        "position_B_m": [
+          0.35,
+          0.137,
+          0.075
+        ],
+        "size_m": [
+          0.34,
+          0.014,
+          0.15
+        ]
+      },
+      {
+        "name": "back_wall",
+        "position_B_m": [
+          0.525,
+          0,
+          0.075
+        ],
+        "size_m": [
+          0.014,
+          0.288,
+          0.15
+        ]
+      },
+      {
+        "name": "opaque_roof",
+        "position_B_m": [
+          0.35,
+          0,
+          0.2
+        ],
+        "size_m": [
+          0.32,
+          0.24,
+          0.01
+        ]
+      }
+    ],
+    "foods": [
+      {
+        "name": "food_A",
+        "shape": "box",
+        "position_B_m": [
+          0.292,
+          -0.04,
+          0.046
+        ],
+        "size_m": [
+          0.075,
+          0.045,
+          0.052
+        ],
+        "rgba": [
+          0.85,
+          0.37,
+          0.1,
+          1
+        ]
+      },
+      {
+        "name": "food_B",
+        "shape": "sphere",
+        "position_B_m": [
+          0.39,
+          0.035,
+          0.05
+        ],
+        "radius_m": 0.03,
+        "rgba": [
+          0.92,
+          0.67,
+          0.14,
+          1
+        ]
+      },
+      {
+        "name": "food_C",
+        "shape": "box",
+        "position_B_m": [
+          0.432,
+          -0.042,
+          0.043
+        ],
+        "size_m": [
+          0.036,
+          0.036,
+          0.046
+        ],
+        "rgba": [
+          0.33,
+          0.65,
+          0.3,
+          1
+        ]
+      }
+    ]
+  }
+}

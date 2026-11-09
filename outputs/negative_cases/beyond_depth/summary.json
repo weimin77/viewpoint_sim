@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-11-06T03:37:44.847152+00:00",
+  "seed": 20261106,
+  "complete": false,
+  "accepted_total": 0,
+  "heights": [
+    {
+      "height_above_tray_m": 0.65,
+      "accepted": 0,
+      "target": 1,
+      "attempts": 8,
+      "rejections": {
+        "depth_range": 8
+      },
+      "complete": false,
+      "acceptance_rate": 0.0
+    }
+  ],
+  "minimum_axis_angle_deg": null,
+  "elapsed_seconds": 0.004740481999760959,
+  "simulation_limits": [
+    "Kinematic motion; no dynamics/controller settling",
+    "Ideal aligned undistorted RGB-D; no stereo matching/noise/material physics",
+    "Discrete collision checking; not continuous swept-volume certification",
+    "Example workcell and camera extrinsics; replace with measured values"
+  ],
+  "view_ids_ranked_by_tray_ratio": {
+    "0.65": []
+  }
+}

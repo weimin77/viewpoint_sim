@@ -16,6 +16,6 @@ test_nonadjacent_arm_self_collision_is_rejected (test_world.WorldTests.test_nona
 test_visible_masks_and_depth (test_world.WorldTests.test_visible_masks_and_depth) ... ok
 
 ----------------------------------------------------------------------
-Ran 15 tests in 4.233s
+Ran 15 tests in 4.105s
 
 OK

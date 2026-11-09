@@ -56,6 +56,8 @@ bash scripts/setup.sh
 
 GUI 中可旋转、平移和缩放观察工位；绿色线框为 Food ROI，黄色为 Tray ROI，蓝色矩形为各采样高度，绿色小视锥为拍照视点。规划查询会临时改变关节状态；检查实际运动时使用 `replay`。
 
+`replay` 按 `motion.replay_speed_rad_per_s`（默认 1.2 rad/s）在关节空间恒速播放，到达每个采集位姿后停顿 `motion.replay_pause_seconds`（默认 0.5 s），此时绘制视锥。路径碰撞复核在独立的无窗口 PyBullet 客户端上完成，因此复核不会让可见机器人在动画开始前先瞬移到轨迹终点。
+
 本次在 Linux 的 **DIRECT 模式与 CPU TinyRenderer** 上运行和验证。GUI 需要本地图形桌面；WSL2 需可用的 WSLg。若 GUI 无法启动，先用 `--headless` 生成数据并打开 HTML 结果页。
 
 ### Windows PowerShell
@@ -95,6 +97,7 @@ Windows 启动脚本已提供，尚未在本次 Linux 执行环境中运行验�
 | 图像边距 | 水平、竖直各 10% |
 | 可见率阈值 | 每块食材至少 90% 的独立投影轮廓可见 |
 | 路径碰撞 | 2 mm 间隙；关节插值最大步长 0.025 rad |
+| 回放 | 关节空间恒速 1.2 rad/s；每个采集位姿停顿 0.5 s |
 
 所有 JSON 长度单位是 **米**，角度单位是 **弧度**。所有坐标都在固定 Base 参考系中；`base_position_B_m` 仅用于调整模拟机器人在该工位参考系中的位置，默认为原点。
 

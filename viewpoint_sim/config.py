@@ -45,6 +45,8 @@ def validate_config(cfg):
             raise ValueError("Sampling interval must have positive width")
     if cfg["motion"]["edge_resolution_rad"] <= 0 or cfg["motion"]["collision_margin_m"] < 0:
         raise ValueError("Invalid collision parameters")
+    if cfg["motion"].get("replay_speed_rad_per_s", 1.) <= 0 or cfg["motion"].get("replay_pause_seconds", 0.) < 0:
+        raise ValueError("Invalid replay timing parameters")
     for f in cfg["scene"]["foods"]:
         half = np.asarray(f["size_m"]) / 2 if f["shape"] == "box" else np.repeat(f["radius_m"], 3)
         p = np.asarray(f["position_B_m"])

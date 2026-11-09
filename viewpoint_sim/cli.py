@@ -9,6 +9,7 @@ from .config import load_config
 
 
 def replay(result, gui=True, gif=None):
+    from contextlib import ExitStack
     from .world import World
     from .motion import interpolate, path_free
     result = Path(result)
@@ -16,31 +17,84 @@ def replay(result, gui=True, gif=None):
     views = json.loads((result/"views.json").read_text(encoding="utf-8"))
     if not views:
         raise ValueError("There are no accepted views to replay")
-    frames = []
-    with World(cfg,gui=gui) as world:
+    motion = cfg["motion"]
+    # Playback is a constant joint-space speed, independent of the recorded path
+    # sampling, so every edge takes time proportional to the distance it covers.
+    speed = float(motion.get("replay_speed_rad_per_s", 1.2))
+    pause = float(motion.get("replay_pause_seconds", .5))
+    resolution = float(motion.get("edge_resolution_rad", .025))
+    if speed <= 0 or resolution <= 0 or pause < 0:
+        raise ValueError("Invalid replay timing settings")
+
+    frames, durations, interval = [], [], .05
+    with ExitStack() as stack:
+        # Revalidation needs joint states, and driving the visible robot through a
+        # whole trajectory first would teleport it before the animation starts.
+        shadow = stack.enter_context(World(cfg, gui=False))
         for view in views:
-            path = view["path_q_rad"]
-            world.draw_view(np.array(view['T_BC_actual']))
-            if not path_free(world,path):
+            if not path_free(shadow, np.asarray(view["path_q_rad"], float)):
                 raise RuntimeError("Saved replay path failed collision revalidation")
-            for a,b in zip(path,path[1:]):
-                for q in interpolate(np.array(a),np.array(b),.075):
-                    world.set_q(q)
-                    if gui:
-                        time.sleep(.03)
-                    if gif:
-                        canvas=Image.new("RGB",(1000,440),"#101b28")
-                        scene=Image.fromarray(world.overview()).resize((660,440))
-                        rgb=Image.fromarray(world.render(world.camera_pose())[0]).resize((320,180))
-                        canvas.paste(scene,(0,0));canvas.paste(rgb,(670,125))
-                        draw=ImageDraw.Draw(canvas)
-                        draw.text((680,30),"MYCOBOT 280 M5 / VIEWPOINT SIM",fill="#72dfbe")
-                        draw.text((680,62),f"Target height: {view['height_above_tray_m']*1000:.0f} mm",fill="white")
-                        draw.text((680,86),view["id"],fill="white")
-                        draw.text((680,340),"KINEMATIC / IDEAL RGB-D",fill="#a0b3c5")
-                        frames.append(canvas)
+        world = shadow if not gui else stack.enter_context(World(cfg, gui=True))
+        world.set_q(np.array(cfg["robot"]["home_q_rad"], float))
+        clock, next_frame, started = 0., 0., time.monotonic()
+
+        def frame(view, captured=False, duration=None):
+            canvas=Image.new("RGB",(1000,440),"#101b28")
+            scene=Image.fromarray(world.overview()).resize((660,440))
+            rgb=Image.fromarray(world.render(world.camera_pose())[0]).resize((320,180))
+            canvas.paste(scene,(0,0));canvas.paste(rgb,(670,125))
+            draw=ImageDraw.Draw(canvas)
+            draw.text((680,30),"MYCOBOT 280 M5 / VIEWPOINT SIM",fill="#72dfbe")
+            draw.text((680,62),f"Target height: {view['height_above_tray_m']*1000:.0f} mm",fill="white")
+            draw.text((680,86),view["id"],fill="white")
+            draw.text((680,340),"KINEMATIC / IDEAL RGB-D",fill="#a0b3c5")
+            if captured:
+                draw.text((680,286),"CAPTURED",fill="#71dfbf")
+            frames.append(canvas)
+            durations.append(int(round(duration if duration else interval*1000)))
+
+        def wait():
+            if gui or gif:
+                delay = clock - (time.monotonic()-started)
+                if delay > 0:
+                    time.sleep(delay)
+
+        def advance(q, view):
+            """Pose the robot at q and keep playback on the shared simulated clock."""
+            nonlocal next_frame
+            world.set_q(q)
+            if gif:
+                # Fixed-rate sampling keeps GIF speed independent of step count.
+                while next_frame <= clock + 1e-9:
+                    frame(view)
+                    next_frame += interval
+            wait()
+
+        def hold(view):
+            """Stop at the capture pose; one long frame keeps the pause visible."""
+            nonlocal clock, next_frame
+            world.set_q(np.asarray(view["path_q_rad"], float)[-1])
+            if pause <= 0:
+                return
+            clock += pause
+            if gif:
+                frame(view, captured=True, duration=pause*1000)
+                next_frame = clock + interval
+            wait()
+
+        for view in views:
+            path = np.asarray(view["path_q_rad"], float)
+            for a, b in zip(path, path[1:]):
+                points = interpolate(a, b, resolution)
+                per_step = float(np.max(np.abs(b-a))) / max(1, len(points)-1)
+                for q in points[1:]:
+                    clock += per_step/speed
+                    advance(q, view)
+            world.draw_view(np.array(view["T_BC_actual"]))
+            hold(view)
         if gif and frames:
-            frames[0].save(gif,save_all=True,append_images=frames[1:],duration=100,loop=0,optimize=True)
+            frames[0].save(gif,save_all=True,append_images=frames[1:],
+                           duration=durations,loop=0,optimize=True)
         if gui:
             print("Replay complete. Close the PyBullet window or press Ctrl+C to finish.")
             import pybullet as p

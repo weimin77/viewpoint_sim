@@ -1,1 +1,1 @@
-"""Vendored robot resources; see piper/LICENSE and piper/provenance.json."""
+"""Vendored robot resources; see mycobot_280_m5/LICENSE and mycobot_280_m5/provenance.json."""

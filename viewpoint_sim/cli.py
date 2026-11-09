@@ -34,7 +34,7 @@ def replay(result, gui=True, gif=None):
                         rgb=Image.fromarray(world.render(world.camera_pose())[0]).resize((320,180))
                         canvas.paste(scene,(0,0));canvas.paste(rgb,(670,125))
                         draw=ImageDraw.Draw(canvas)
-                        draw.text((680,30),"PiPER / VIEWPOINT SIM",fill="#72dfbe")
+                        draw.text((680,30),"MYCOBOT 280 M5 / VIEWPOINT SIM",fill="#72dfbe")
                         draw.text((680,62),f"Target height: {view['height_above_tray_m']*1000:.0f} mm",fill="white")
                         draw.text((680,86),view["id"],fill="white")
                         draw.text((680,340),"KINEMATIC / IDEAL RGB-D",fill="#a0b3c5")
@@ -52,7 +52,7 @@ def replay(result, gui=True, gif=None):
 
 
 def main(argv=None):
-    parser=argparse.ArgumentParser(description="PiPER constrained random viewpoint simulation")
+    parser=argparse.ArgumentParser(description="myCobot 280 constrained random viewpoint simulation")
     sub=parser.add_subparsers(dest="command",required=True)
     run=sub.add_parser("run",help="Sample, validate, execute kinematically, and export RGB-D")
     run.add_argument("--config",default=None)

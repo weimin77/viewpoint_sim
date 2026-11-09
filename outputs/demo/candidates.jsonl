@@ -1,13 +1,61 @@
-{"id": "h00_c0001", "height_above_tray_m": 0.3, "eye_B_m": [0.4038426954972102, 0.13699922653299287, 0.32], "accepted": true, "reason": "accepted", "folder": "h00_c0001", "tray_ratio": 0.281809224275471}
-{"id": "h00_c0002", "height_above_tray_m": 0.3, "eye_B_m": [0.3622116742079936, 0.12367139586344564, 0.32], "accepted": true, "reason": "accepted", "folder": "h00_c0002", "tray_ratio": 0.3018217014480029}
-{"id": "h00_c0003", "height_above_tray_m": 0.3, "eye_B_m": [0.4508805156896943, 0.053926965336647925, 0.32], "accepted": true, "reason": "accepted", "folder": "h00_c0003", "tray_ratio": 0.3177128158839489}
-{"id": "h00_c0004", "height_above_tray_m": 0.3, "eye_B_m": [0.36240575847966205, -0.149159150508573, 0.32], "accepted": true, "reason": "accepted", "folder": "h00_c0004", "tray_ratio": 0.277777231075947}
-{"id": "h01_c0001", "height_above_tray_m": 0.36, "eye_B_m": [0.29781497261771306, -0.14071297181979703, 0.38], "accepted": true, "reason": "accepted", "folder": "h01_c0001", "tray_ratio": 0.20619701818045744}
-{"id": "h01_c0002", "height_above_tray_m": 0.36, "eye_B_m": [0.3051675540813864, 0.10052142812182854, 0.38], "accepted": true, "reason": "accepted", "folder": "h01_c0002", "tray_ratio": 0.2264149418860719}
-{"id": "h01_c0003", "height_above_tray_m": 0.36, "eye_B_m": [0.2840438463556485, 0.04688839265736566, 0.38], "accepted": true, "reason": "accepted", "folder": "h01_c0003", "tray_ratio": 0.2391314905050781}
-{"id": "h01_c0004", "height_above_tray_m": 0.36, "eye_B_m": [0.24502370866883894, -0.14010577696587928, 0.38], "accepted": true, "reason": "accepted", "folder": "h01_c0004", "tray_ratio": 0.1934962080903343}
-{"id": "h02_c0001", "height_above_tray_m": 0.42, "eye_B_m": [0.21513460215285432, -0.09823291731495051, 0.44], "accepted": false, "reason": "depth_range"}
-{"id": "h02_c0002", "height_above_tray_m": 0.42, "eye_B_m": [0.2197324656432118, -0.013314195797783923, 0.44], "accepted": true, "reason": "accepted", "folder": "h02_c0002", "tray_ratio": 0.16585582092868062}
-{"id": "h02_c0003", "height_above_tray_m": 0.42, "eye_B_m": [0.21721706347835498, 0.05797152718756668, 0.44], "accepted": true, "reason": "accepted", "folder": "h02_c0003", "tray_ratio": 0.16146502083210212}
-{"id": "h02_c0004", "height_above_tray_m": 0.42, "eye_B_m": [0.2636427874811422, -0.12243644521846903, 0.44], "accepted": true, "reason": "accepted", "folder": "h02_c0004", "tray_ratio": 0.1589313082280013}
-{"id": "h02_c0005", "height_above_tray_m": 0.42, "eye_B_m": [0.33418063028045064, 0.07715461157750805, 0.44], "accepted": true, "reason": "accepted", "folder": "h02_c0005", "tray_ratio": 0.17762461523072237}
+{"id": "h00_c0001", "height_above_tray_m": 0.22, "eye_B_m": [0.21569621248003495, 0.06393297238206336, 0.24], "accepted": true, "reason": "accepted", "folder": "h00_c0001", "tray_ratio": 0.26080052791268826}
+{"id": "h00_c0002", "height_above_tray_m": 0.22, "eye_B_m": [0.19410975699673744, 0.05771331806960797, 0.24], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0003", "height_above_tray_m": 0.22, "eye_B_m": [0.24008619332058223, 0.02516591715710237, 0.24], "accepted": false, "reason": "food_out_of_rgb_fov"}
+{"id": "h00_c0004", "height_above_tray_m": 0.22, "eye_B_m": [0.19421039328575074, -0.06960760357066742, 0.24], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0005", "height_above_tray_m": 0.22, "eye_B_m": [0.16071887469066604, -0.06566605351590529, 0.24], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0006", "height_above_tray_m": 0.22, "eye_B_m": [0.16453132433849665, 0.04690999979018666, 0.24], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0007", "height_above_tray_m": 0.22, "eye_B_m": [0.15357829070292886, 0.02188124990677065, 0.24], "collision_detail": "self_collision:2:5", "accepted": false, "reason": "self_collision"}
+{"id": "h00_c0008", "height_above_tray_m": 0.22, "eye_B_m": [0.13334562671717576, -0.06538269591741035, 0.24], "collision_detail": "self_collision:2:5", "accepted": false, "reason": "self_collision"}
+{"id": "h00_c0009", "height_above_tray_m": 0.22, "eye_B_m": [0.11784757148666519, -0.04584202808031025, 0.24], "accepted": false, "reason": "food_out_of_rgb_fov"}
+{"id": "h00_c0010", "height_above_tray_m": 0.22, "eye_B_m": [0.12023164885203574, -0.0062132913722991595, 0.24], "accepted": false, "reason": "food_out_of_rgb_fov"}
+{"id": "h00_c0011", "height_above_tray_m": 0.22, "eye_B_m": [0.11892736624803592, 0.027053379354197785, 0.24], "accepted": false, "reason": "food_out_of_rgb_fov"}
+{"id": "h00_c0012", "height_above_tray_m": 0.22, "eye_B_m": [0.14299996387911076, -0.05713700776861889, 0.24], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0013", "height_above_tray_m": 0.22, "eye_B_m": [0.17957514162690033, 0.0360054854028371, 0.24], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0014", "height_above_tray_m": 0.22, "eye_B_m": [0.1612217134598585, -0.06770072747150166, 0.24], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0015", "height_above_tray_m": 0.22, "eye_B_m": [0.2243546164002448, -0.03346467955067365, 0.24], "accepted": false, "reason": "food_out_of_rgb_fov"}
+{"id": "h00_c0016", "height_above_tray_m": 0.22, "eye_B_m": [0.23285086205917588, 0.06857328922030997, 0.24], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h00_c0017", "height_above_tray_m": 0.22, "eye_B_m": [0.17540595816167162, -0.055025327065051366, 0.24], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0018", "height_above_tray_m": 0.22, "eye_B_m": [0.14482846818257036, 0.034011580414235534, 0.24], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0019", "height_above_tray_m": 0.22, "eye_B_m": [0.23080881382268648, 0.022057993743774026, 0.24], "accepted": false, "reason": "food_out_of_rgb_fov"}
+{"id": "h00_c0020", "height_above_tray_m": 0.22, "eye_B_m": [0.1612363155575779, -0.06819631369592609, 0.24], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0021", "height_above_tray_m": 0.22, "eye_B_m": [0.19163756289276274, 0.05587326214778843, 0.24], "accepted": true, "reason": "accepted", "folder": "h00_c0021", "tray_ratio": 0.27278151861747624}
+{"id": "h00_c0022", "height_above_tray_m": 0.22, "eye_B_m": [0.2105863157273924, 0.01545550127273207, 0.24], "accepted": true, "reason": "accepted", "folder": "h00_c0022", "tray_ratio": 0.28772059705799946}
+{"id": "h00_c0023", "height_above_tray_m": 0.22, "eye_B_m": [0.21942549432415298, 0.0006156916969342618, 0.24], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h00_c0024", "height_above_tray_m": 0.22, "eye_B_m": [0.15348951656778279, 0.056426135472648326, 0.24], "accepted": true, "reason": "accepted", "folder": "h00_c0024", "tray_ratio": 0.26941787431247105}
+{"id": "h01_c0001", "height_above_tray_m": 0.28, "eye_B_m": [0.19054671743838608, 0.04777412658879736, 0.30000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h01_c0002", "height_above_tray_m": 0.28, "eye_B_m": [0.20927990462008816, 0.016798398558507482, 0.30000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h01_c0003", "height_above_tray_m": 0.28, "eye_B_m": [0.2097734491367354, -0.04390514808584299, 0.30000000000000004], "accepted": true, "reason": "accepted", "folder": "h01_c0003", "tray_ratio": 0.17388859702902848}
+{"id": "h01_c0004", "height_above_tray_m": 0.28, "eye_B_m": [0.23422333968390918, 0.03225774835591955, 0.30000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h01_c0005", "height_above_tray_m": 0.28, "eye_B_m": [0.21983939624169385, -0.009402610486091895, 0.30000000000000004], "accepted": true, "reason": "accepted", "folder": "h01_c0005", "tray_ratio": 0.17737000059790503}
+{"id": "h01_c0006", "height_above_tray_m": 0.28, "eye_B_m": [0.22726165988614117, -0.009908680518877847, 0.30000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h01_c0007", "height_above_tray_m": 0.28, "eye_B_m": [0.1406122393747626, 0.036770090708633976, 0.30000000000000004], "accepted": true, "reason": "accepted", "folder": "h01_c0007", "tray_ratio": 0.17382704325916715}
+{"id": "h01_c0008", "height_above_tray_m": 0.28, "eye_B_m": [0.17022268099696092, -0.03440798089025743, 0.30000000000000004], "accepted": true, "reason": "accepted", "folder": "h01_c0008", "tray_ratio": 0.17807283498168855}
+{"id": "h02_c0001", "height_above_tray_m": 0.34, "eye_B_m": [0.21760395827301265, -0.02995995647104103, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0002", "height_above_tray_m": 0.34, "eye_B_m": [0.18502852067937167, 0.056430800009131726, 0.36000000000000004], "accepted": true, "reason": "accepted", "folder": "h02_c0002", "tray_ratio": 0.11877027733312452}
+{"id": "h02_c0003", "height_above_tray_m": 0.34, "eye_B_m": [0.15321174398309753, -0.00020492083313980447, 0.36000000000000004], "accepted": true, "reason": "accepted", "folder": "h02_c0003", "tray_ratio": 0.1223517396949821}
+{"id": "h02_c0004", "height_above_tray_m": 0.34, "eye_B_m": [0.2442243484769091, 0.01868066262916214, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0005", "height_above_tray_m": 0.34, "eye_B_m": [0.14518424439756794, -0.0012587250833633878, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0006", "height_above_tray_m": 0.34, "eye_B_m": [0.2015987087174798, 0.004195461597920391, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0007", "height_above_tray_m": 0.34, "eye_B_m": [0.1974915480981148, -0.004607339230168095, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0008", "height_above_tray_m": 0.34, "eye_B_m": [0.21134880884238977, -0.009804373181980588, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0009", "height_above_tray_m": 0.34, "eye_B_m": [0.17385041896359932, -0.022527470900879074, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0010", "height_above_tray_m": 0.34, "eye_B_m": [0.22229610259029775, 0.00305488156874012, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0011", "height_above_tray_m": 0.34, "eye_B_m": [0.11161856434408769, -0.039938652367432104, 0.36000000000000004], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h02_c0012", "height_above_tray_m": 0.34, "eye_B_m": [0.20783265913272803, -0.05754579003307528, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0013", "height_above_tray_m": 0.34, "eye_B_m": [0.188406044053403, 0.025704340201509718, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0014", "height_above_tray_m": 0.34, "eye_B_m": [0.1180670019165268, -0.05843836477286987, 0.36000000000000004], "capture_failures": ["occlusion"], "quality": [{"instance_id": 1, "name": "food_A", "reference_pixels": 2329, "visible_pixels": 133, "visible_fraction": 0.05710605410047231, "valid_depth_fraction": 1.0, "bbox_xyxy": [246, 191, 299, 227], "min_bbox_side_px": 36}, {"instance_id": 2, "name": "food_B", "reference_pixels": 1376, "visible_pixels": 1376, "visible_fraction": 1.0, "valid_depth_fraction": 1.0, "bbox_xyxy": [308, 137, 351, 178], "min_bbox_side_px": 41}, {"instance_id": 3, "name": "food_C", "reference_pixels": 1145, "visible_pixels": 1145, "visible_fraction": 1.0, "valid_depth_fraction": 1.0, "bbox_xyxy": [353, 196, 393, 226], "min_bbox_side_px": 30}], "accepted": true, "reason": "accepted", "folder": "h02_c0014", "tray_ratio": 0.11368755981547464}
+{"id": "h02_c0015", "height_above_tray_m": 0.34, "eye_B_m": [0.15555317930615223, 0.018874524889373856, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0016", "height_above_tray_m": 0.34, "eye_B_m": [0.20700619900318257, 0.03784158170290454, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0017", "height_above_tray_m": 0.34, "eye_B_m": [0.15001354015585466, 0.06136963845858631, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0018", "height_above_tray_m": 0.34, "eye_B_m": [0.2474075411604082, -0.06273459950795415, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0019", "height_above_tray_m": 0.34, "eye_B_m": [0.11210542136951455, -0.02743892497380851, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0020", "height_above_tray_m": 0.34, "eye_B_m": [0.20005740518651666, 0.0004240783630676953, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0021", "height_above_tray_m": 0.34, "eye_B_m": [0.175312821046862, 0.017291919558055827, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0022", "height_above_tray_m": 0.34, "eye_B_m": [0.15231550154832474, -0.050789794856869054, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0023", "height_above_tray_m": 0.34, "eye_B_m": [0.21718238805385975, -0.008403521415829625, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0024", "height_above_tray_m": 0.34, "eye_B_m": [0.2125387887013643, -0.06767474253479237, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0025", "height_above_tray_m": 0.34, "eye_B_m": [0.162793538194495, 0.06850918307875287, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0026", "height_above_tray_m": 0.34, "eye_B_m": [0.17991556005758158, -0.022174425878752985, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0027", "height_above_tray_m": 0.34, "eye_B_m": [0.12024831891113719, -0.012889561329550062, 0.36000000000000004], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h02_c0028", "height_above_tray_m": 0.34, "eye_B_m": [0.22613504058459405, -0.012428550280757872, 0.36000000000000004], "accepted": false, "reason": "duplicate_axis"}
+{"id": "h02_c0029", "height_above_tray_m": 0.34, "eye_B_m": [0.24260777154973245, 0.05733656178083826, 0.36000000000000004], "accepted": true, "reason": "accepted", "folder": "h02_c0029", "tray_ratio": 0.11375053968612513}

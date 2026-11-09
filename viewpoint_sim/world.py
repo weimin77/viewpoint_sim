@@ -37,11 +37,23 @@ class World:
         self.allowed = {frozenset((self.link_ids[e.get("link1")], self.link_ids[e.get("link2")]))
                         for e in srdf.findall("disable_collisions")
                         if e.get("link1") in self.link_ids and e.get("link2") in self.link_ids}
+        # Links joined by a joint cannot meaningfully collide (MoveIt "Adjacent").
+        tree = ET.parse(source).getroot()
+        links = [e.get("name") for e in tree.findall("link")]
+        children = {e.find("child").get("link") for e in tree.findall("joint")}
+        for root_link in (n for n in links if n not in children):
+            self.link_ids.setdefault(root_link, -1)
+        for j in tree.findall("joint"):
+            a, b = j.find("parent").get("link"), j.find("child").get("link")
+            if a in self.link_ids and b in self.link_ids:
+                self.allowed.add(frozenset((self.link_ids[a], self.link_ids[b])))
         # Only explicit attachment contacts are exempted for the fixture.
-        for a, b in [("link6", "camera_bracket"), ("link6", "camera_housing"),
-                     ("camera_bracket", "camera_housing")]:
+        self.camera_links = ("camera_bracket", "camera_housing")
+        for a, b in [(robot["flange_link"], self.camera_links[0]),
+                     (robot["flange_link"], self.camera_links[1]),
+                     (self.camera_links[0], self.camera_links[1])]:
             self.allowed.add(frozenset((self.link_ids[a], self.link_ids[b])))
-        self.environment, self.food_ids, self.names = [], [], {self.robot: "PiPER"}
+        self.environment, self.food_ids, self.names = [], [], {self.robot: "robot"}
         scene = cfg["scene"]
         self.table = self.box("table", scene["table"]["position_B_m"], scene["table"]["size_m"], [.24,.29,.35,1])
         self.tray = self.box("tray", scene["tray"]["position_B_m"], scene["tray"]["size_m"], [.28,.32,.36,1])
@@ -63,7 +75,7 @@ class World:
         self.set_q(robot["home_q_rad"])
         if gui:
             p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0, physicsClientId=self.cid)
-            p.resetDebugVisualizerCamera(.95, 45, -28, [.28,0,.20], physicsClientId=self.cid)
+            p.resetDebugVisualizerCamera(.62, 45, -28, [.16,0,.10], physicsClientId=self.cid)
             self.draw_scene()
 
     def draw_scene(self):
@@ -124,7 +136,7 @@ class World:
         add_box("camera_housing", center, cam["mount"]["rpy_FC_rad"], size, [.10,.15,.20,1])
         bs = cam["bracket_size_m"]
         add_box("camera_bracket", [0,0,bs[2]/2], [0,0,0], bs, [.18,.65,.70,1])
-        path = Path(self.tmp.name)/"piper_camera.urdf"
+        path = Path(self.tmp.name)/"robot_camera.urdf"
         tree.write(path, encoding="utf-8", xml_declaration=True)
         return path
 
@@ -167,7 +179,7 @@ class World:
             # The wrist mesh ends on the flange plane. Its contact with the
             # bracket's mounting face is intentional; exempt only that small
             # nonpenetrating interface, not the entire link5/bracket pair.
-            if {a,b} == {self.link_ids["link5"],self.link_ids["camera_bracket"]} and c[8] >= -1e-5:
+            if {a,b} == {self.link_ids[self.kin.flange_parent],self.link_ids["camera_bracket"]} and c[8] >= -1e-5:
                 points_F = apply(inv(self.flange_pose()),[c[5],c[6]])
                 if np.max(np.abs(points_F[:,2])) < .003 and np.max(np.linalg.norm(points_F[:,:2],axis=1)) < .012:
                     continue
@@ -175,7 +187,7 @@ class World:
         for body in self.environment+self.food_ids:
             for c in p.getClosestPoints(self.robot, body, distance, physicsClientId=self.cid):
                 # The fixed robot base may touch its mounting table.
-                if body == self.table and c[3] in (-1, self.link_ids["base_link"]):
+                if body == self.table and c[3] == -1:
                     continue
                 return f"environment_collision:{self.names[body]}"
         return None
@@ -219,10 +231,10 @@ class World:
 
     def overview(self):
         # The perspective is only for a third-person preview, not capture geometry.
-        eye = [.95,-.80,.72]
-        target = [.28,0,.18]
+        eye = [.62,-.58,.50]
+        target = [.16,0,.14]
         from .geometry import look_at
-        c = {"width":960,"height":640,"fx":760.,"fy":760.,"cx":479.5,"cy":319.5}
+        c = {"width":960,"height":640,"fx":560.,"fy":560.,"cx":479.5,"cy":319.5}
         return self.render(look_at(eye, target, [0,0,1]), c)[0]
 
     def close(self):

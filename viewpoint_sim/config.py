@@ -5,7 +5,7 @@ import numpy as np
 from .geometry import transform
 
 ROOT = Path(__file__).resolve().parents[1]
-if not (ROOT / "assets" / "piper").is_dir():
+if not (ROOT / "assets").is_dir():
     ROOT = Path(__file__).resolve().parent
 
 

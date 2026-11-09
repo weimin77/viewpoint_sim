@@ -19,6 +19,8 @@ class Kinematics:
             j = by_child[name]
             chain.append(j)
             name = j.find("parent").get("link")
+        self.flange_link = flange
+        self.flange_parent = chain[0].find("parent").get("link") if chain else None
         self.chain, self.names, lower, upper = [], [], [], []
         for j in reversed(chain):
             o = j.find("origin")
@@ -55,6 +57,8 @@ class Kinematics:
 
     def solve(self, target, seed, rng, config):
         margin = config["joint_limit_margin_rad"]
+        # Characteristic length makes rotational and translation rows comparable.
+        scale = config.get("ik_characteristic_length_m", .25)
         low, high = self.lower + margin, self.upper - margin
         starts = [np.clip(seed, low, high), (low+high)/2]
         starts += [rng.uniform(low, high) for _ in range(max(0, config["ik_starts"]-2))]
@@ -63,7 +67,7 @@ class Kinematics:
             def residual(q):
                 actual = self.fk(q)
                 rot = Rotation.from_matrix(target[:3, :3] @ actual[:3, :3].T).as_rotvec()
-                return np.r_[(actual[:3, 3]-target[:3, 3]), rot * .25]
+                return np.r_[(actual[:3, 3]-target[:3, 3]), rot * scale]
             result = least_squares(residual, start, bounds=(low, high),
                                    max_nfev=70, ftol=1e-8, xtol=1e-9, gtol=1e-9)
             q = result.x
@@ -73,7 +77,7 @@ class Kinematics:
             if pe > config["ik_position_tolerance_m"] or re > config["ik_rotation_tolerance_deg"]:
                 continue
             # Characteristic length 0.25 m makes rotational and translation rows comparable.
-            sigma = float(np.linalg.svd(np.vstack((J[:3], J[3:]*.25)), compute_uv=False)[-1])
+            sigma = float(np.linalg.svd(np.vstack((J[:3], J[3:]*scale)), compute_uv=False)[-1])
             if sigma < config["min_scaled_jacobian_singular_value"]:
                 continue
             if not any(np.linalg.norm(q-s[0]) < 1e-3 for s in solutions):

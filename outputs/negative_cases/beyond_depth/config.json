@@ -1,27 +1,28 @@
 {
   "units": "m_rad",
-  "description": "Example open-top workcell, bare PiPER with camera fixture; NOT measured hardware calibration",
+  "description": "Example open-top workcell, Elephant Robotics myCobot 280 M5 with wrist camera fixture; NOT measured hardware calibration",
   "seed": 20261106,
   "robot": {
-    "urdf": "assets/piper/piper.urdf",
-    "srdf": "assets/piper/piper.srdf",
-    "flange_link": "link6",
+    "urdf": "assets/mycobot_280_m5/mycobot.urdf",
+    "srdf": "assets/mycobot_280_m5/mycobot.srdf",
+    "flange_link": "joint6_flange",
     "base_position_B_m": [
       0,
       0,
-      0
+      0.08
     ],
     "home_q_rad": [
       0,
-      0.8,
-      -1.0,
+      -0.45,
+      0.6,
+      -0.9,
       0,
-      0.5,
       0
     ],
     "ik_starts": 8,
     "ik_position_tolerance_m": 0.0005,
     "ik_rotation_tolerance_deg": 0.1,
+    "ik_characteristic_length_m": 0.2,
     "joint_limit_margin_rad": 0.01,
     "min_scaled_jacobian_singular_value": 0.003
   },
@@ -74,10 +75,11 @@
       0.5
     ],
     "mount": {
+      "description": "side mount: bracket along the tool axis, camera optical +Z along flange +X",
       "translation_F_m": [
         0,
         0,
-        0.07
+        0.03
       ],
       "rpy_FC_rad": [
         3.141592653589793,
@@ -91,43 +93,43 @@
       0.023
     ],
     "bracket_size_m": [
-      0.014,
-      0.014,
-      0.052
+      0.012,
+      0.012,
+      0.026
     ]
   },
   "roi": {
     "food_min_B": [
-      0.235,
-      -0.08,
+      0.09,
+      -0.06,
       0.02
     ],
     "food_max_B": [
-      0.465,
-      0.08,
-      0.09
+      0.27,
+      0.06,
+      0.08
     ],
-    "margin_m": 0.003,
+    "margin_m": 0.002,
     "tray_z_B_m": 0.02,
     "tray_corners_B": [
       [
-        0.2,
-        -0.115,
+        0.08,
+        -0.075,
         0.02
       ],
       [
-        0.5,
-        -0.115,
+        0.28,
+        -0.075,
         0.02
       ],
       [
-        0.5,
-        0.115,
+        0.28,
+        0.075,
         0.02
       ],
       [
-        0.2,
-        0.115,
+        0.08,
+        0.075,
         0.02
       ]
     ],
@@ -140,12 +142,12 @@
   },
   "sampling": {
     "x_B_m": [
-      0.2,
-      0.47
+      0.11,
+      0.25
     ],
     "y_B_m": [
-      -0.15,
-      0.15
+      -0.07,
+      0.07
     ],
     "heights_above_tray_m": [
       0.65
@@ -185,25 +187,25 @@
   "scene": {
     "table": {
       "position_B_m": [
-        0.25,
+        0.15,
         0,
         -0.055
       ],
       "size_m": [
-        1.1,
-        0.85,
+        0.55,
+        0.5,
         0.1
       ]
     },
     "tray": {
       "position_B_m": [
-        0.35,
+        0.18,
         0,
         0.01
       ],
       "size_m": [
-        0.3,
-        0.23,
+        0.2,
+        0.15,
         0.02
       ]
     },
@@ -211,40 +213,40 @@
       {
         "name": "left_wall",
         "position_B_m": [
-          0.35,
-          -0.137,
-          0.075
+          0.18,
+          -0.087,
+          0.06
         ],
         "size_m": [
-          0.34,
-          0.014,
-          0.15
+          0.22,
+          0.012,
+          0.12
         ]
       },
       {
         "name": "right_wall",
         "position_B_m": [
-          0.35,
-          0.137,
-          0.075
+          0.18,
+          0.087,
+          0.06
         ],
         "size_m": [
-          0.34,
-          0.014,
-          0.15
+          0.22,
+          0.012,
+          0.12
         ]
       },
       {
         "name": "back_wall",
         "position_B_m": [
-          0.525,
+          0.29,
           0,
-          0.075
+          0.06
         ],
         "size_m": [
-          0.014,
-          0.288,
-          0.15
+          0.012,
+          0.186,
+          0.12
         ]
       }
     ],
@@ -253,14 +255,14 @@
         "name": "food_A",
         "shape": "box",
         "position_B_m": [
-          0.292,
-          -0.04,
-          0.046
+          0.13,
+          -0.03,
+          0.041
         ],
         "size_m": [
-          0.075,
-          0.045,
-          0.052
+          0.055,
+          0.032,
+          0.042
         ],
         "rgba": [
           0.85,
@@ -273,11 +275,11 @@
         "name": "food_B",
         "shape": "sphere",
         "position_B_m": [
-          0.39,
-          0.035,
-          0.05
+          0.19,
+          0.025,
+          0.042
         ],
-        "radius_m": 0.03,
+        "radius_m": 0.022,
         "rgba": [
           0.92,
           0.67,
@@ -289,14 +291,14 @@
         "name": "food_C",
         "shape": "box",
         "position_B_m": [
-          0.432,
-          -0.042,
-          0.043
+          0.235,
+          -0.03,
+          0.038
         ],
         "size_m": [
-          0.036,
-          0.036,
-          0.046
+          0.028,
+          0.028,
+          0.036
         ],
         "rgba": [
           0.33,

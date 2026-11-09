@@ -24,8 +24,8 @@
     "case": "opaque_roof",
     "passed": true,
     "rejections": {
-      "occlusion": 7,
-      "ik_or_singularity": 1
+      "occlusion": 6,
+      "self_collision": 2
     }
   },
   {

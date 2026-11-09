@@ -7,14 +7,21 @@ from viewpoint_sim.geometry import look_at, inv, project
 from viewpoint_sim.acquisition import inspect_capture
 from viewpoint_sim.motion import edge_free, plan, path_free
 
+CFG = load_config()
+CENTER = (np.array(CFG['roi']['food_min_B'])+np.array(CFG['roi']['food_max_B']))/2
+
 
 class WorldTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.cfg=load_config()
+        cls.cfg=CFG
         cls.world=World(cls.cfg)
-        cls.eye=look_at([.32,.04,.36],[.35,0,.055])
-        cls.sol=cls.world.kin.solve(cls.eye@inv(cls.world.mount),np.array(cls.cfg['robot']['home_q_rad']),np.random.default_rng(0),cls.cfg['robot'])[0][0]
+        cls.eye=look_at([CENTER[0]-.02,CENTER[1]+.04,
+                         cls.cfg['roi']['tray_z_B_m']+cls.cfg['sampling']['heights_above_tray_m'][1]],
+                        CENTER, cls.cfg['sampling']['reference_up_B'])
+        solutions=cls.world.kin.solve(cls.eye@inv(cls.world.mount),
+            np.array(cls.cfg['robot']['home_q_rad']),np.random.default_rng(0),cls.cfg['robot'])
+        cls.sol=next(q for q,_ in solutions if cls.world.collision(q) is None)
 
     @classmethod
     def tearDownClass(cls):
@@ -48,7 +55,8 @@ class WorldTests(unittest.TestCase):
     def test_known_overhead_obstacle_is_detected_as_occlusion(self):
         w=self.world
         # A wide opaque horizontal plate between camera and food, inside the frustum.
-        obstacle=w.box('test_plate',[.35,0,.20],[.29,.21,.01],[.4,.4,.4,1])
+        z=w.cfg['roi']['tray_z_B_m']+.14
+        obstacle=w.box('test_plate',[CENTER[0],CENTER[1],z],[.22,.17,.008],[.4,.4,.4,1])
         # World visual list must include this new shape for the isolated reference pass.
         shapes=[(obstacle,v[1],v[7]) for v in p.getVisualShapeData(obstacle,physicsClientId=w.cid)]
         w.visuals.extend(shapes)
@@ -63,8 +71,8 @@ class WorldTests(unittest.TestCase):
 
     def test_collision_check_rejects_robot_through_obstacle(self):
         w=self.world;w.set_q(self.sol)
-        position=p.getLinkState(w.robot,w.link_ids['link3'],computeForwardKinematics=True,physicsClientId=w.cid)[4]
-        obstacle=w.box('test_collision',position,[.08,.08,.08],[.7,.1,.1,1])
+        position=p.getLinkState(w.robot,w.link_ids['joint4'],computeForwardKinematics=True,physicsClientId=w.cid)[4]
+        obstacle=w.box('test_collision',position,[.06,.06,.06],[.7,.1,.1,1])
         try:
             self.assertTrue(w.collision(self.sol).startswith('environment_collision'))
             self.assertFalse(edge_free(w,np.array(self.cfg['robot']['home_q_rad']),self.sol))
@@ -73,8 +81,7 @@ class WorldTests(unittest.TestCase):
             w.environment.remove(obstacle)
 
     def test_nonadjacent_arm_self_collision_is_rejected(self):
-        q=np.array([-2.1214502258522323,.6709876155363461,-.04433450426566177,
-                    .78116500533591,.8832914295100773,-1.8691016742991902])
+        q=np.array([1.908605,-.440094,.257679,-2.454708,1.427248,.23887])
         self.assertTrue(self.world.collision(q).startswith('self_collision'))
 
 
@@ -85,7 +92,7 @@ class RendererTests(unittest.TestCase):
             a=np.array(cfg['robot']['home_q_rad']);b=a.copy();b[0]=1.3
             middle=(a+b)/2;w.set_q(middle)
             center=p.getLinkState(w.robot,w.link_ids['camera_housing'],computeForwardKinematics=True,physicsClientId=w.cid)[4]
-            w.box('mid_edge_obstacle',center,[.045,.045,.045],[.8,.1,.1,1])
+            w.box('mid_edge_obstacle',center,[.04,.04,.04],[.8,.1,.1,1])
             self.assertIsNone(w.collision(a));self.assertIsNone(w.collision(b))
             self.assertFalse(edge_free(w,a,b))
             alternative=plan(w,a,b,np.random.default_rng(4))
@@ -96,13 +103,13 @@ class RendererTests(unittest.TestCase):
         cfg=load_config();cfg['scene']['foods']=[];cfg['scene']['obstacles']=[]
         with World(cfg) as w:
             c=dict(cfg['camera']['rgb']);c['cx']=280.;c['cy']=155.
-            T=look_at([.35,0,.35],[.35,0,.02])
+            T=look_at([.2,0,.35],[.2,0,.02])
             rgb,z,ids=w.render(T,c)
             self.assertAlmostEqual(float(z[155,280]),.33,places=4)
-            marker=w.box('marker',[.385,.025,.08],[.006,.006,.006],[1,0,0,1])
+            marker=w.box('marker',[.235,.025,.08],[.006,.006,.006],[1,0,0,1])
             _,_,ids=w.render(T,c)
             yy,xx=np.where(ids==marker)
-            expected,_=project([[.385,.025,.083]],T,c)
+            expected,_=project([[.235,.025,.083]],T,c)
             actual=np.array([(xx.min()+xx.max())/2,(yy.min()+yy.max())/2])
             np.testing.assert_allclose(actual,expected[0],atol=1.5)
 

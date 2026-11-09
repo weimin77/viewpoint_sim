@@ -1,8 +1,8 @@
-{"id": "h00_c0001", "height_above_tray_m": 0.28, "eye_B_m": [0.21569621248003495, 0.06393297238206336, 0.30000000000000004], "accepted": false, "reason": "ik_or_singularity"}
-{"id": "h00_c0002", "height_above_tray_m": 0.28, "eye_B_m": [0.19410975699673744, 0.05771331806960797, 0.30000000000000004], "accepted": false, "reason": "ik_or_singularity"}
-{"id": "h00_c0003", "height_above_tray_m": 0.28, "eye_B_m": [0.24008619332058223, 0.02516591715710237, 0.30000000000000004], "accepted": false, "reason": "ik_or_singularity"}
-{"id": "h00_c0004", "height_above_tray_m": 0.28, "eye_B_m": [0.19421039328575074, -0.06960760357066742, 0.30000000000000004], "accepted": false, "reason": "ik_or_singularity"}
-{"id": "h00_c0005", "height_above_tray_m": 0.28, "eye_B_m": [0.16071887469066604, -0.06566605351590529, 0.30000000000000004], "accepted": false, "reason": "ik_or_singularity"}
-{"id": "h00_c0006", "height_above_tray_m": 0.28, "eye_B_m": [0.16453132433849665, 0.04690999979018666, 0.30000000000000004], "accepted": false, "reason": "ik_or_singularity"}
-{"id": "h00_c0007", "height_above_tray_m": 0.28, "eye_B_m": [0.15357829070292886, 0.02188124990677065, 0.30000000000000004], "accepted": false, "reason": "ik_or_singularity"}
-{"id": "h00_c0008", "height_above_tray_m": 0.28, "eye_B_m": [0.13334562671717576, -0.06538269591741035, 0.30000000000000004], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0001", "height_above_tray_m": 0.24, "eye_B_m": [0.21569621248003495, 0.06393297238206336, 0.26], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0002", "height_above_tray_m": 0.24, "eye_B_m": [0.19410975699673744, 0.05771331806960797, 0.26], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0003", "height_above_tray_m": 0.24, "eye_B_m": [0.24008619332058223, 0.02516591715710237, 0.26], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0004", "height_above_tray_m": 0.24, "eye_B_m": [0.19421039328575074, -0.06960760357066742, 0.26], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0005", "height_above_tray_m": 0.24, "eye_B_m": [0.16071887469066604, -0.06566605351590529, 0.26], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0006", "height_above_tray_m": 0.24, "eye_B_m": [0.16453132433849665, 0.04690999979018666, 0.26], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0007", "height_above_tray_m": 0.24, "eye_B_m": [0.15357829070292886, 0.02188124990677065, 0.26], "accepted": false, "reason": "ik_or_singularity"}
+{"id": "h00_c0008", "height_above_tray_m": 0.24, "eye_B_m": [0.13334562671717576, -0.06538269591741035, 0.26], "accepted": false, "reason": "ik_or_singularity"}

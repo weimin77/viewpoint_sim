@@ -10,28 +10,28 @@ test_unusable_height_is_rejected (test_geometry.GeometryTests.test_unusable_heig
 test_free_endpoints_can_still_have_an_unsafe_direct_edge (test_world.RendererTests.test_free_endpoints_can_still_have_an_unsafe_direct_edge) ... ok
 test_off_center_intrinsics_and_optical_depth (test_world.RendererTests.test_off_center_intrinsics_and_optical_depth) ... ok
 test_actual_camera_pose_and_collision_free_path (test_world.WorldTests.test_actual_camera_pose_and_collision_free_path) ... ok
-test_capture_exports_follow_crop_switch (test_world.WorldTests.test_capture_exports_follow_crop_switch) ... /home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmp19h2x212/v/rgb.png'>
+test_capture_exports_follow_crop_switch (test_world.WorldTests.test_capture_exports_follow_crop_switch) ... /home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpw43fr97q/v/rgb.png'>
   self.assertEqual(Image.open(folder/(name+'.png')).size,cam)
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-/home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmp19h2x212/v/depth_mm.png'>
+/home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpw43fr97q/v/depth_mm.png'>
   self.assertEqual(Image.open(folder/(name+'.png')).size,cam)
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-/home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmp19h2x212/v/instance.png'>
+/home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpw43fr97q/v/instance.png'>
   self.assertEqual(Image.open(folder/(name+'.png')).size,cam)
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-/home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmp19h2x212/v/food_mask.png'>
+/home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpw43fr97q/v/food_mask.png'>
   self.assertEqual(Image.open(folder/(name+'.png')).size,cam)
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-/home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmp45x173il/v/rgb.png'>
+/home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpmlk4y104/v/rgb.png'>
   self.assertEqual(Image.open(folder/(name+'.png')).size,cam)
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-/home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmp45x173il/v/depth_mm.png'>
+/home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpmlk4y104/v/depth_mm.png'>
   self.assertEqual(Image.open(folder/(name+'.png')).size,cam)
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-/home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmp45x173il/v/instance.png'>
+/home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpmlk4y104/v/instance.png'>
   self.assertEqual(Image.open(folder/(name+'.png')).size,cam)
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-/home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmp45x173il/v/food_mask.png'>
+/home/min/projects/sim/viewpoint_sim/tests/test_world.py:99: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpmlk4y104/v/food_mask.png'>
   self.assertEqual(Image.open(folder/(name+'.png')).size,cam)
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
 ok
@@ -42,6 +42,6 @@ test_nonadjacent_arm_self_collision_is_rejected (test_world.WorldTests.test_nona
 test_visible_masks_and_depth (test_world.WorldTests.test_visible_masks_and_depth) ... ok
 
 ----------------------------------------------------------------------
-Ran 17 tests in 4.244s
+Ran 17 tests in 4.420s
 
 OK

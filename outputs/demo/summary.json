@@ -1,50 +1,49 @@
 {
   "schema_version": 1,
-  "created_utc": "2026-11-09T07:08:11.479965+00:00",
+  "created_utc": "2026-11-09T09:11:28.368620+00:00",
   "seed": 20261106,
   "complete": true,
   "accepted_total": 12,
   "heights": [
     {
-      "height_above_tray_m": 0.22,
+      "height_above_tray_m": 0.2,
       "accepted": 4,
       "target": 4,
-      "attempts": 24,
+      "attempts": 32,
       "rejections": {
-        "ik_or_singularity": 10,
-        "food_out_of_rgb_fov": 6,
+        "ik_or_singularity": 11,
+        "food_out_of_rgb_fov": 14,
         "self_collision": 2,
-        "duplicate_axis": 2
+        "duplicate_axis": 1
       },
       "complete": true,
-      "acceptance_rate": 0.16666666666666666
+      "acceptance_rate": 0.125
+    },
+    {
+      "height_above_tray_m": 0.24,
+      "accepted": 4,
+      "target": 4,
+      "attempts": 4,
+      "rejections": {},
+      "complete": true,
+      "acceptance_rate": 1.0
     },
     {
       "height_above_tray_m": 0.28,
       "accepted": 4,
       "target": 4,
-      "attempts": 8,
+      "attempts": 17,
       "rejections": {
-        "duplicate_axis": 4
+        "duplicate_axis": 9,
+        "ik_or_singularity": 3,
+        "environment_collision": 1
       },
       "complete": true,
-      "acceptance_rate": 0.5
-    },
-    {
-      "height_above_tray_m": 0.34,
-      "accepted": 4,
-      "target": 4,
-      "attempts": 29,
-      "rejections": {
-        "duplicate_axis": 23,
-        "ik_or_singularity": 2
-      },
-      "complete": true,
-      "acceptance_rate": 0.13793103448275862
+      "acceptance_rate": 0.23529411764705882
     }
   ],
-  "minimum_axis_angle_deg": 6.11440852564897,
-  "elapsed_seconds": 17.301402171997324,
+  "minimum_axis_angle_deg": 6.28263850037959,
+  "elapsed_seconds": 18.099113344999978,
   "simulation_limits": [
     "Kinematic motion; no dynamics/controller settling",
     "Ideal aligned undistorted RGB-D; no stereo matching/noise/material physics",
@@ -52,23 +51,23 @@
     "Example workcell and camera extrinsics; replace with measured values"
   ],
   "view_ids_ranked_by_tray_ratio": {
-    "0.22": [
-      "h00_c0022",
-      "h00_c0021",
-      "h00_c0024",
-      "h00_c0001"
+    "0.2": [
+      "h00_c0032",
+      "h00_c0027",
+      "h00_c0017",
+      "h00_c0016"
+    ],
+    "0.24": [
+      "h01_c0003",
+      "h01_c0001",
+      "h01_c0002",
+      "h01_c0004"
     ],
     "0.28": [
-      "h01_c0008",
-      "h01_c0005",
-      "h01_c0003",
-      "h01_c0007"
-    ],
-    "0.34": [
-      "h02_c0003",
+      "h02_c0017",
       "h02_c0002",
-      "h02_c0029",
-      "h02_c0014"
+      "h02_c0005",
+      "h02_c0012"
     ]
   }
 }

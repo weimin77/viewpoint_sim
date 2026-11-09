@@ -150,9 +150,9 @@
       0.07
     ],
     "heights_above_tray_m": [
-      0.22,
-      0.28,
-      0.34
+      0.2,
+      0.24,
+      0.28
     ],
     "target_per_height": 4,
     "max_attempts_per_height": 250,
@@ -165,8 +165,8 @@
       0
     ],
     "image_margin_fraction": [
-      0.1,
-      0.1
+      0.05,
+      0.05
     ],
     "tray_min_ratio_by_height": [
       0.0,

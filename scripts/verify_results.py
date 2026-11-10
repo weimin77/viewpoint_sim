@@ -31,7 +31,10 @@ def verify(result):
             last=np.array(view['q_actual_rad']);world.set_q(last)
             np.testing.assert_allclose(T,world.camera_pose(),atol=1e-6)
             np.testing.assert_allclose(np.array(view['T_BF_actual'])@view['T_FC'],T,atol=1e-6)
-            assert abs(T[2,3]-cfg['roi']['tray_z_B_m']-view['height_above_tray_m']) < cfg['robot']['ik_position_tolerance_m']
+            # Optical centre height = tray plane + configured base height + the
+            # optional per-candidate Z perturbation actually drawn for this view.
+            z_offset=view.get('z_perturbation_m',0.)
+            assert abs(T[2,3]-cfg['roi']['tray_z_B_m']-view['height_above_tray_m']-z_offset) < cfg['robot']['ik_position_tolerance_m'],view['id']
             _,reason=geometry_check(cfg,T,view['height_index']);assert reason is None
             for i,d in axes:
                 if cfg['sampling']['deduplicate_across_heights'] or i==view['height_index']:

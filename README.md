@@ -10,6 +10,7 @@
 |---|---|---|
 | Food 3D ROI 与独立 Tray ROI | Base 坐标下的包围盒与托盘四角，外加空间裕量 | `configs/default.json` |
 | 固定相机光心高度 | `camera_z_B = tray_z_B + h`，每个高度独立随机采样 | `planner.py` |
+| 可选 Z 扰动 Δ | `camera_z_B = tray_z_B + h + δ`，`δ ~ U(−Δ, +Δ)`；默认 Δ=0 退化为固定平面，δ 逐候选记录 | `planner.py` |
 | XY 均匀随机采样 | 独立随机流、固定种子、最大尝试次数 | `planner.py` |
 | Look-at | 光学系 X 右、Y 下、Z 前，参考方向退化处理 | `geometry.py` |
 | 完整入镜 | 8 顶点针孔投影、5% 图像边距、RGB/Depth 共同视场 | `planner.py` |
@@ -97,6 +98,7 @@ Windows 启动脚本已提供，尚未在本次 Linux 执行环境中运行验�
 | Food ROI | X=[90,270]，Y=[-60,60]，Z=[20,80] mm |
 | 空间裕量 | ROI 向各方向扩 2 mm |
 | 相机高度 | 距托盘 200、240、280 mm |
+| Z 扰动幅度 Δ | 0（固定平面）。`sampling.z_perturbation_m > 0` 时每个候选在 `[h−Δ, h+Δ]` 内独立抽 δ，须满足 Δ < 最小配置高度 |
 | XY 采样范围 | X=[110,250]，Y=[-70,70] mm |
 | 相机画面 | 640 × 360，理想无畸变针孔 |
 | 内参 | 从标称视场近似，**不是 D405 实测内参** |
@@ -127,6 +129,7 @@ Windows 启动脚本已提供，尚未在本次 Linux 执行环境中运行验�
 3. 用 SDK 内参替换 `camera.rgb / depth`，用支架测量或标定结果替换 `camera.mount`。
 4. 修改高度列表后，同步修改等长的 `tray_min_ratio_by_height`；0 表示不启用该高度的原图占比硬阈值。
 5. 用 `robot.home_q_rad` 设置实际准备姿态，再检查整个转移路径。
+6. 需要 Z 扰动消融时设置 `sampling.z_perturbation_m`（米）。该值必须小于最小配置高度；每个候选的 δ 写入 `views.json` 的 `z_perturbation_m`，逐高度记录在 `summary.json` 的 `heights[].z_perturbations_m`。δ 只改变采样高度，几何、深度量程、IK、碰撞、路径与图像质量检查全部照常执行。
 
 首版支持 **已经对齐且内参相同的 RGB/Depth**，`T_CD=I`。配置校验会拒绝独立光学系或不同内参，避免直接把未对齐深度当作像素对齐数据。畸变也未模拟。
 
@@ -146,7 +149,7 @@ Windows 启动脚本已提供，尚未在本次 Linux 执行环境中运行验�
 | `crop_*.png` | **可选**：`quality.crop.enabled=true` 时额外输出的联合裁剪 RGB、Depth、实例与二值 Mask；默认不生成 |
 | `overlay.png` | Food/Tray ROI 投影与裁剪框 |
 | `overview.png` | 拍照时机械臂和工位的第三人称渲染 |
-| `metadata.json` | 目标/实际相机和法兰位姿、安装外参、关节角、路径、内参、`image_size_xy`、`roi_bbox_xyxy`、质量指标；开启裁剪时另有 `crop_bbox_*` / `K_crop` / `tray_ratio_cropped` |
+| `metadata.json` | 目标/实际相机和法兰位姿、安装外参、关节角、路径、`z_perturbation_m`、`camera_height_above_tray_m`、内参、`image_size_xy`、`roi_bbox_xyxy`、质量指标；开启裁剪时另有 `crop_bbox_*` / `K_crop` / `tray_ratio_cropped` |
 
 运行根目录保存 `config.json`、`views.json`、`summary.json`、`candidates.jsonl`、`height_comparison.json` 和 `report.html`。
 
@@ -173,7 +176,7 @@ Windows 启动脚本已提供，尚未在本次 Linux 执行环境中运行验�
 .venv/bin/python -m viewpoint_sim replay --result outputs/demo --headless --gif outputs/my_preview.gif
 ```
 
-测试含：Look-at 退化、非零安装外参、凸包完整入镜、多边形裁切、裁剪主点更新、裁剪开关默认值与旧配置兜底、全幅导出尺寸、光学深度、偏置主点渲染、遮挡、自碰撞/环境碰撞、终点均安全但中段碰撞，以及 RRT 绕行。`docs/validation.md` 记录本次结果。
+测试含：Look-at 退化、非零安装外参、凸包完整入镜、多边形裁切、裁剪主点更新、裁剪开关默认值与旧配置兜底、全幅导出尺寸、光学深度、偏置主点渲染、遮挡、自碰撞/环境碰撞、终点均安全但中段碰撞、RRT 绕行，以及 Z 扰动的幅度边界、零振幅下的种子可复现性和扰动候选仍受几何约束。`docs/validation.md` 记录本次结果。
 
 ## 6. 仿真的边界
 

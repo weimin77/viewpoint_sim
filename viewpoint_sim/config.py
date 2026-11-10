@@ -40,6 +40,16 @@ def validate_config(cfg):
         raise ValueError("Invalid minimum axis angle")
     if any(h <= 0 for h in s["heights_above_tray_m"]):
         raise ValueError("Camera height must be positive")
+    # Optional Z perturbation: delta ~ U(-amplitude, +amplitude) added to the
+    # configured base height of each candidate. The optical centre must stay
+    # above the tray plane, so the amplitude cannot swallow the smallest height.
+    amplitude = s.get("z_perturbation_m", 0.)
+    if isinstance(amplitude, bool) or not isinstance(amplitude, (int, float)):
+        raise ValueError("sampling.z_perturbation_m must be a number")
+    if amplitude < 0:
+        raise ValueError("sampling.z_perturbation_m must be non-negative")
+    if amplitude >= min(s["heights_above_tray_m"]):
+        raise ValueError("sampling.z_perturbation_m must stay below every configured height")
     for k in ("x_B_m", "y_B_m"):
         if s[k][0] >= s[k][1]:
             raise ValueError("Sampling interval must have positive width")

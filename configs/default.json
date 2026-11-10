@@ -154,6 +154,7 @@
       0.24,
       0.28
     ],
+    "z_perturbation_m": 0.0,
     "target_per_height": 4,
     "max_attempts_per_height": 250,
     "max_tilt_deg": 40,

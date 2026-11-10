@@ -4,7 +4,7 @@ import copy
 from viewpoint_sim.config import load_config, mount_transform, validate_config, crop_settings
 from viewpoint_sim.geometry import (look_at, transform, inv, apply, project, box_vertices,
     image_contains, clip_polygon, polygon_area, cropped_intrinsics, crop_box)
-from viewpoint_sim.planner import geometry_check
+from viewpoint_sim.planner import geometry_check, sample_camera_position
 
 CFG = load_config()
 CENTER = (np.array(CFG['roi']['food_min_B'])+np.array(CFG['roi']['food_max_B']))/2
@@ -90,6 +90,59 @@ class GeometryTests(unittest.TestCase):
         a,_=project(target,shifted,c);b,_=project(target,new,c)
         np.testing.assert_allclose(b[0],[c['cx'],c['cy']],atol=1e-10)
         self.assertGreater(np.linalg.norm(a-b),5)
+
+    def test_z_perturbation_defaults_to_zero_and_stays_reproducible(self):
+        cfg = load_config()
+        h = cfg['sampling']['heights_above_tray_m'][0]
+        tray_z = cfg['roi']['tray_z_B_m']
+        self.assertEqual(sample_camera_position(cfg, h, np.random.default_rng(7)),
+                         sample_camera_position(cfg, h, np.random.default_rng(7)))
+        eye, delta = sample_camera_position(cfg, h, np.random.default_rng(7))
+        self.assertEqual(delta, 0.)
+        self.assertAlmostEqual(eye[2], tray_z+h, places=12)
+        # A zero amplitude must consume exactly the two XY draws, so every seed
+        # keeps producing the pre-perturbation result.
+        expected = np.random.default_rng(7)
+        self.assertAlmostEqual(eye[0], expected.uniform(*cfg['sampling']['x_B_m']), places=12)
+        self.assertAlmostEqual(eye[1], expected.uniform(*cfg['sampling']['y_B_m']), places=12)
+
+    def test_z_perturbation_stays_within_amplitude(self):
+        cfg = copy.deepcopy(CFG)
+        amplitude = .01
+        cfg['sampling']['z_perturbation_m'] = amplitude
+        validate_config(cfg)
+        h = cfg['sampling']['heights_above_tray_m'][0]
+        tray_z = cfg['roi']['tray_z_B_m']
+        rng = np.random.default_rng(0)
+        deltas = [sample_camera_position(cfg, h, rng) for _ in range(200)]
+        values = np.array([d for _, d in deltas])
+        self.assertLessEqual(np.abs(values).max(), amplitude)
+        # A nonzero amplitude must actually spread heights, not stay on one plane.
+        self.assertGreater(np.abs(values).max(), amplitude/2)
+        z = np.array([e[2] for e, _ in deltas])
+        np.testing.assert_allclose(z, tray_z+h+values, atol=1e-12)
+        self.assertTrue(np.all(z > tray_z))
+
+    def test_perturbed_candidates_still_pass_every_geometry_constraint(self):
+        # A perturbation is only a sampling change: the candidate must still clear
+        # the normal geometry gate, so a delta that brings the camera down onto the
+        # tray is rejected instead of being accepted because it was perturbed.
+        h = CFG['sampling']['heights_above_tray_m'][1]
+        tray_z = CFG['roi']['tray_z_B_m']
+        for delta, expect_ok in [(-.20, False), (-.12, False), (0., True), (.12, True)]:
+            eye = [CENTER[0], CENTER[1], tray_z+h+delta]
+            T = look_at(eye, CENTER, CFG['sampling']['reference_up_B'])
+            geo, reason = geometry_check(CFG, T, 1)
+            self.assertEqual(reason is None, expect_ok, f'delta={delta}: {reason}')
+            if expect_ok:
+                self.assertIsNotNone(geo)
+
+    def test_z_perturbation_validation_rejects_impossible_values(self):
+        for bad in (-.01, min(CFG['sampling']['heights_above_tray_m']), 1., 'x', True):
+            cfg = copy.deepcopy(CFG)
+            cfg['sampling']['z_perturbation_m'] = bad
+            with self.assertRaises(ValueError):
+                validate_config(cfg)
 
 
 if __name__=='__main__':

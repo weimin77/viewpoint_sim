@@ -4,7 +4,6 @@ from pathlib import Path
 import json
 import time
 import numpy as np
-import pybullet as p
 from PIL import Image
 from scipy.spatial.transform import Rotation
 from .acquisition import inspect_capture, save_capture, collect_images

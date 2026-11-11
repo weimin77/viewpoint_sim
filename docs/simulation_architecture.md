@@ -35,7 +35,7 @@
 | `motion.py` | 78 | 关节插值、边/路径碰撞检查、RRT-Connect | `interpolate` `edge_free` `path_free` `plan` |
 | **`world.py`** | **359** | **PyBullet 场景：建模、碰撞、渲染** | `World` `._oven_boxes` `._rack_boxes` `.collision` `.render` `.isolated_food_masks` |
 | `acquisition.py` | 155 | 采集、质量验收、导出、平铺 RGB | `inspect_capture` `save_capture` `collect_images` |
-| `planner.py` | 208 | 主流程：采样 → 门禁 → 执行 → 落盘 | `geometry_check` `sample_camera_position` `execute_path` `run` |
+| `planner.py` | 207 | 主流程：采样 → 门禁 → 执行 → 落盘 | `geometry_check` `sample_camera_position` `execute_path` `run` |
 | `comparison.py` | 31 | 同 XY 的平移 vs 重 Look-at 对照 | `compare_heights` |
 | `report.py` | 46 | 生成零依赖离线 HTML 报告 | `make_report` |
 | `cli.py` | 145 | 子命令 `run` / `replay` / `check` | `main` `replay` |
@@ -71,7 +71,7 @@ graph TD
 要点：
 
 - **`geometry` 是唯一的叶子依赖**，只依赖 numpy / scipy，无状态、易测；
-- **`world` 是唯一持有 PyBullet 状态的模块**（`planner.py` 有一行 `import pybullet as p` 但从未使用，属待清理项）；
+- **`world` 是唯一持有 PyBullet 状态的模块**（`cli.replay()` 另有一处函数内局部导入，用于搭建只做路径复核的影子客户端）；
 - `planner` 与 `comparison` 存在**双向引用**，用"函数内延迟导入"打破循环：
 
   ```python
@@ -524,7 +524,7 @@ def isolated_food_masks(T_BC):
 
 ### 10.5 第三人称预览
 
-`overview()` 用一条**独立的固定虚拟相机**（`eye=[0.62,−0.58,0.50]`、`target=[0.16,0,0.14]`、960×640、`fx=fy=560`），仅用于生成 `overview.png` 与 GIF 的画面，**不参与任何判定**。
+`overview()` 用一条**独立的固定虚拟相机**（`eye=[0.62,−0.58,0.50]`、`target=[0.16,0,0.14]`、`960×640`、`fx=fy=560`），仅用于生成 `overview.png` 与 GIF 的画面，**不参与任何判定**。
 
 注意这组坐标是早期紧凑工位（托盘距底座 0.18 m）时定的，现在工位已移到 0.4 m，预览构图偏近但没有功能性影响。
 
@@ -603,7 +603,6 @@ sample_rng, ik_rng, path_rng = [np.random.default_rng(s) for s in seeds]
 
 | 项 | 位置 | 说明 |
 |---|---|---|
-| 未使用的 import | `planner.py:7` | `import pybullet as p` 从未使用 |
 | 过时的包描述 | `pyproject.toml` | `description` 仍写 "myCobot 280 …" |
 | 预览相机坐标 | `world.overview()` | 固定为早期紧凑工位的构图参数 |
 | ROI/场景双重描述 | `roi.*` vs `scene.*` | 无交叉校验，需人工保证一致（见 §7） |

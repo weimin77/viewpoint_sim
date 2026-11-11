@@ -40,7 +40,7 @@
 | `report.py` | 46 | Pillow | **零改动** |
 | `comparison.py` | 31 | numpy | **零改动** |
 | `acquisition.py` | 155 | numpy / Pillow（回调 `world.render`） | **零改动** |
-| `planner.py` | 208 | numpy / scipy | 删一行未使用的 `import pybullet as p` |
+| `planner.py` | 207 | numpy / scipy | **零改动**（`pybullet` 依赖已清理） |
 | **`world.py`** | **359** | **pybullet** | **唯一实际替换点** |
 | `cli.py` | 145 | pybullet（仅 GUI 事件循环） | 被 launch / node 取代 |
 
@@ -202,7 +202,7 @@ viewpoint_planner_node:
 |---|---|
 | 新建 `viewpoint_sim_core`，搬入 geometry/kinematics/config/motion/comparison/report | `python -c "import viewpoint_sim_core"` 在**无 rclpy** 环境可用 |
 | `world.py` 搬入 `viewpoint_sim_sim`，内部零改动，仅调整 import | `World(cfg)` 行为不变 |
-| 删除 `planner.py` 的 `import pybullet as p`（从未使用） | — |
+| ~~删除 `planner.py` 的 `import pybullet as p`~~ | 已完成 |
 | 保留现有 `viewpoint-sim` CLI 与 `scripts/*.py` 可用 | `unittest discover` 39 项全绿；`check` / `run` / `replay` 输出与 `0f290b8` 一致 |
 
 **关键约束**：此阶段**不引入任何 ROS 依赖**，只做目录与 import 调整。目的是先拿到一个"行为零变更"的重构提交。

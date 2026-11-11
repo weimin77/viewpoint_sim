@@ -64,7 +64,50 @@ def validate_config(cfg):
         padding = crop.get("padding_px", cfg["quality"].get("crop_padding_px", 10))
         if padding < 0 or padding >= min(cfg["camera"]["rgb"]["width"], cfg["camera"]["rgb"]["height"])/2:
             raise ValueError("Invalid quality.crop.padding_px")
-    for f in cfg["scene"]["foods"]:
+    scene = cfg["scene"]
+    tray = scene["tray"]
+    tray_lo = [tray["position_B_m"][i]-tray["size_m"][i]/2 for i in range(3)]
+    tray_hi = [tray["position_B_m"][i]+tray["size_m"][i]/2 for i in range(3)]
+    if abs(tray_hi[2]-cfg["roi"]["tray_z_B_m"]) > 1e-9:
+        raise ValueError("scene.tray top face must equal roi.tray_z_B_m")
+    oven = scene.get("oven")
+    if oven:
+        x0, x1 = (float(v) for v in oven["x_m"])
+        y0, y1 = (float(v) for v in oven["y_m"])
+        t, ft = float(oven["wall_thickness_m"]), float(oven["floor_thickness_m"])
+        if x0 >= x1 or y0 >= y1:
+            raise ValueError("Oven footprint must have positive extent")
+        if t <= 0 or ft <= 0 or float(oven["height_m"]) <= 0:
+            raise ValueError("Oven wall thickness, floor thickness and height must be positive")
+        if 2*t >= min(x1-x0, y1-y0):
+            raise ValueError("Oven walls leave no cavity")
+        if float(oven["floor_top_z_m"]) >= cfg["roi"]["tray_z_B_m"]:
+            raise ValueError("Oven floor must sit below the tray")
+        # Only the -X face is open, so the tray has to clear the three walls.
+        if (tray_lo[0] < x0-1e-9 or tray_hi[0] > x1-t+1e-9
+                or tray_lo[1] < y0+t-1e-9 or tray_hi[1] > y1-t+1e-9):
+            raise ValueError("scene.tray must fit inside the oven cavity")
+        rack = scene.get("rack")
+        if rack:
+            wire = float(rack["wire_size_m"])
+            if float(rack["margin_m"]) < 0 or wire <= 0:
+                raise ValueError("Invalid rack dimensions")
+            # The shelf hangs on the side walls at the tray bottom, so there must
+            # be clear air between the oven floor and the underside of the shelf.
+            if tray_lo[2]-float(oven["floor_top_z_m"]) <= 2*wire:
+                raise ValueError("Oven floor is too close to the tray for a shelf")
+            if int(rack["longitudinal_rails"]) < 2:
+                raise ValueError("scene.rack.longitudinal_rails must be at least 2 "
+                                 "(the outer two rails are what carry the shelf)")
+            if int(rack["cross_slats"]) < 1:
+                raise ValueError("scene.rack.cross_slats must be at least 1")
+            # The shelf carries the tray, so the tray may not overhang it. The
+            # shelf's X extent comes from the tray plus `margin_m` on each side,
+            # so only the Y direction (the cavity width) can ever fail here.
+            if (tray_lo[1] < y0+t-1e-9 or tray_hi[1] > y1-t+1e-9):
+                raise ValueError("scene.tray overhangs the wall-mounted shelf "
+                                 "(tray must stay inside the cavity width)")
+    for f in scene["foods"]:
         half = np.asarray(f["size_m"]) / 2 if f["shape"] == "box" else np.repeat(f["radius_m"], 3)
         p = np.asarray(f["position_B_m"])
         if np.any(p-half < a-1e-6) or np.any(p+half > b+1e-6):

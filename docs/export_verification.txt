@@ -1,2 +1,2 @@
 pybullet build time: Jan 29 2025 23:17:20
-PASS: 12 saved views; uniform 640x360 exports, mask/depth consistency, hand-eye transforms, heights, axes, and complete paths verified (crop=off).
+PASS: 8 saved views; uniform 640x360 exports, mask/depth consistency, hand-eye transforms, heights, axes, and complete paths verified (crop=off).

@@ -1,5 +1,6 @@
 """Save bounded failing experiments and verify hard constraints never get relaxed."""
 from pathlib import Path
+import argparse
 import copy
 import json
 import sys
@@ -11,8 +12,14 @@ from viewpoint_sim.planner import run
 
 
 def main():
-    root=Path(sys.argv[1] if len(sys.argv)>1 else 'outputs/negative_cases')
-    base=load_config();cases=[]
+    parser=argparse.ArgumentParser(description="Run the impossible-workcell cases for one robot config")
+    parser.add_argument("root",nargs="?",default="outputs/negative_cases",
+                        help="Output directory (must be empty or absent)")
+    parser.add_argument("--config",default=None,
+                        help="Robot config to derive the cases from (default: configs/default.json)")
+    args=parser.parse_args()
+    root=Path(args.root)
+    base=load_config(args.config);cases=[]
     roi=base['roi'];center=(np.array(roi['food_min_B'])+np.array(roi['food_max_B']))/2
     height=base['sampling']['heights_above_tray_m'][len(base['sampling']['heights_above_tray_m'])//2]
     for name in ['too_low','beyond_depth','impossible_tray_ratio','opaque_roof','unreachable']:

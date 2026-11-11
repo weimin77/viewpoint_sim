@@ -4,5 +4,6 @@ __pycache__/
 *.egg-info/
 outputs/my_*/
 outputs/gui_run/
+outputs/run_*/
 build/
 dist/

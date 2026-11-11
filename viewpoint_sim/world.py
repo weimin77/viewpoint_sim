@@ -57,6 +57,15 @@ class World:
         scene = cfg["scene"]
         self.table = self.box("table", scene["table"]["position_B_m"], scene["table"]["size_m"], [.24,.29,.35,1])
         self.tray = self.box("tray", scene["tray"]["position_B_m"], scene["tray"]["size_m"], [.28,.32,.36,1])
+        # Oven carcass and rack are described by physical constraints (the panel
+        # spans the full outer width, the rack top is the tray bottom) instead
+        # of loose boxes, so the panels cannot drift apart at the corners.
+        self.oven_parts = self._oven_boxes(scene.get("oven"))
+        if self.oven_parts:
+            self.boxes("oven", self.oven_parts, [.55,.60,.65,1])
+        self.rack_parts = self._rack_boxes(scene)
+        if self.rack_parts:
+            self.boxes("rack", self.rack_parts, [.60,.61,.64,1])
         for ob in scene["obstacles"]:
             self.box(ob["name"], ob["position_B_m"], ob["size_m"], [.55,.60,.65,1])
         for food in scene["foods"]:
@@ -154,6 +163,102 @@ class World:
         if not food:
             self.environment.append(bid)
         return bid
+
+    def boxes(self, name, parts, rgba, food=False):
+        """One static body assembled from several axis-aligned boxes.
+
+        A wire rack is a dozen thin bars; bundling them keeps every collision
+        query at a single getClosestPoints call instead of one per bar.
+        ``parts`` is a list of (centre_xyz, size_xyz) in the Base frame.
+        """
+        base = np.asarray(parts[0][0], float)
+        half = [list(np.asarray(size, float)/2) for _, size in parts]
+        offsets = [list(np.asarray(centre, float)-base) for centre, _ in parts]
+        kinds = [p.GEOM_BOX]*len(parts)
+        col = p.createCollisionShapeArray(shapeTypes=kinds, halfExtents=half,
+                                          collisionFramePositions=offsets, physicsClientId=self.cid)
+        vis = p.createVisualShapeArray(shapeTypes=kinds, halfExtents=half,
+                                       visualFramePositions=offsets,
+                                       rgbaColors=[list(rgba)]*len(parts), physicsClientId=self.cid)
+        bid = p.createMultiBody(0, col, vis, base.tolist(), physicsClientId=self.cid)
+        self.names[bid] = name
+        if not food:
+            self.environment.append(bid)
+        return bid
+
+    @staticmethod
+    def _box(lo, hi):
+        """(centre, size) of the axis-aligned box spanned by two corners."""
+        lo, hi = np.asarray(lo, float), np.asarray(hi, float)
+        return ((lo+hi)/2).tolist(), (hi-lo).tolist()
+
+    @staticmethod
+    def _oven_boxes(oven):
+        """Panels of the oven carcass, as (centre, size) pairs.
+
+        The side walls run the full depth of the oven and the +X front panel
+        spans the full outer width, so the two rear corners overlap instead of
+        leaving a slot. The -X face stays open: that is the door the arm and
+        the camera reach through. The top is closed only if asked for, because
+        a lid above the tray would occlude every configured camera height.
+        """
+        if not oven:
+            return []
+        box = World._box
+        x0, x1 = (float(v) for v in oven["x_m"])
+        y0, y1 = (float(v) for v in oven["y_m"])
+        t, ft = float(oven["wall_thickness_m"]), float(oven["floor_thickness_m"])
+        z0 = float(oven["floor_top_z_m"])
+        z1 = z0 + float(oven["height_m"])
+        parts = [
+            box([x0, y0, z0-ft], [x1, y1, z0]),   # floor plate
+            box([x0, y0, z0], [x1, y0+t, z1]),    # -Y side wall
+            box([x0, y1-t, z0], [x1, y1, z1]),    # +Y side wall
+            box([x1-t, y0, z0], [x1, y1, z1]),    # +X front panel, full width
+        ]
+        if oven.get("top", False):
+            parts.append(box([x0, y0, z1], [x1, y1, z1+t]))
+        return parts
+
+    @staticmethod
+    def _rack_boxes(scene):
+        """Side-wall mounted wire shelf, carried by the two side walls.
+
+        The outer rails run front-to-back flush against the inner faces of the
+        left and right walls and the cross bars span the full inner width, so
+        the shelf hangs in the cavity on the walls instead of standing on legs
+        on the floor. The shelf top is the tray bottom, so "the tray rests on
+        the rack" stays true no matter how the tray or oven is resized.
+        """
+        rack, oven = scene.get("rack"), scene.get("oven")
+        if not rack or not oven:
+            return []
+        box = World._box
+        tray = scene["tray"]
+        x0, x1 = (float(v) for v in oven["x_m"])
+        y0, y1 = (float(v) for v in oven["y_m"])
+        t = float(oven["wall_thickness_m"])
+        margin = float(rack["margin_m"])
+        wire = float(rack["wire_size_m"])
+        tray_bottom = tray["position_B_m"][2]-tray["size_m"][2]/2
+        top = tray_bottom
+        level = top-wire
+        inner_y0, inner_y1 = y0+t, y1-t
+        # The shelf spans the tray footprint plus a margin, clipped to the cavity
+        # so the rails always end inside the walls.
+        cx = float(tray["position_B_m"][0])
+        rx0 = max(cx-tray["size_m"][0]/2-margin, x0)
+        rx1 = min(cx+tray["size_m"][0]/2+margin, x1-t)
+        parts = []
+        rails = max(2, int(rack["longitudinal_rails"]))
+        for y in np.linspace(inner_y0+wire/2, inner_y1-wire/2, rails):
+            parts.append(box([rx0, y-wire/2, level], [rx1, y+wire/2, top]))
+        slats = max(1, int(rack["cross_slats"]))
+        for x in (np.linspace(rx0+wire/2, rx1-wire/2, slats) if slats > 1
+                  else [(rx0+rx1)/2]):
+            # Touching both wall faces is what makes this a wall-mounted shelf.
+            parts.append(box([x-wire/2, inner_y0, level], [x+wire/2, inner_y1, top]))
+        return parts
 
     def set_q(self, q):
         for j, v in zip(self.joints, q):

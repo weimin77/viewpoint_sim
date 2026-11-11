@@ -25,14 +25,20 @@ class GeometryTests(unittest.TestCase):
             self.assertAlmostEqual(np.linalg.det(T[:3,:3]),1.)
             np.testing.assert_allclose(T[:3,2],[0,0,-1])
 
-    def test_hand_eye_transform_has_rotation_and_translation(self):
+    def test_hand_eye_transform_is_the_inverse_of_the_mount(self):
         T_BC=self.camera(xy=(CENTER[0]+.03,CENTER[1]+.02))
         T_FC=mount_transform(CFG)
         T_BF=T_BC@inv(T_FC)
         np.testing.assert_allclose(T_BF@T_FC,T_BC,atol=1e-12)
-        self.assertGreater(np.linalg.norm(T_BC[:3,3]-T_BF[:3,3]),.02)
-        self.assertGreater(np.linalg.norm(T_BC[:3,:3]-T_BF[:3,:3]),.5)
-        p=np.array([[.20,-.04,.08]])
+        # The flange target offsets the camera target by exactly the mount
+        # translation, rotated into the base frame.
+        offset=T_BC[:3,3]-T_BF[:3,3]
+        np.testing.assert_allclose(offset,T_BC[:3,:3]@T_FC[:3,3],atol=1e-12)
+        self.assertGreater(np.linalg.norm(offset),.02)
+        # And the flange frame is the camera frame with the mount rotation undone,
+        # which is the identity for an axial mount and a real rotation otherwise.
+        np.testing.assert_allclose(T_BF[:3,:3]@T_FC[:3,:3],T_BC[:3,:3],atol=1e-12)
+        p=np.array([[.40,-.04,.08]])
         np.testing.assert_allclose(apply(inv(T_BC),p),apply(inv(T_FC),apply(inv(T_BF),p)),atol=1e-12)
 
     def test_eight_vertices_bound_the_whole_pinhole_box(self):
@@ -91,8 +97,12 @@ class GeometryTests(unittest.TestCase):
         np.testing.assert_allclose(b[0],[c['cx'],c['cy']],atol=1e-10)
         self.assertGreater(np.linalg.norm(a-b),5)
 
-    def test_z_perturbation_defaults_to_zero_and_stays_reproducible(self):
-        cfg = load_config()
+    def test_zero_amplitude_stays_on_plane_and_reproducible(self):
+        # Zero amplitude must consume exactly the two XY draws, so every seed
+        # keeps producing the pre-perturbation result. The shipped config enables
+        # a nonzero amplitude, so the zero case is built explicitly here.
+        cfg = copy.deepcopy(CFG)
+        cfg['sampling']['z_perturbation_m'] = 0.
         h = cfg['sampling']['heights_above_tray_m'][0]
         tray_z = cfg['roi']['tray_z_B_m']
         self.assertEqual(sample_camera_position(cfg, h, np.random.default_rng(7)),
@@ -100,8 +110,6 @@ class GeometryTests(unittest.TestCase):
         eye, delta = sample_camera_position(cfg, h, np.random.default_rng(7))
         self.assertEqual(delta, 0.)
         self.assertAlmostEqual(eye[2], tray_z+h, places=12)
-        # A zero amplitude must consume exactly the two XY draws, so every seed
-        # keeps producing the pre-perturbation result.
         expected = np.random.default_rng(7)
         self.assertAlmostEqual(eye[0], expected.uniform(*cfg['sampling']['x_B_m']), places=12)
         self.assertAlmostEqual(eye[1], expected.uniform(*cfg['sampling']['y_B_m']), places=12)
@@ -127,12 +135,13 @@ class GeometryTests(unittest.TestCase):
         # A perturbation is only a sampling change: the candidate must still clear
         # the normal geometry gate, so a delta that brings the camera down onto the
         # tray is rejected instead of being accepted because it was perturbed.
-        h = CFG['sampling']['heights_above_tray_m'][1]
+        index = len(CFG['sampling']['heights_above_tray_m'])-1
+        h = CFG['sampling']['heights_above_tray_m'][index]
         tray_z = CFG['roi']['tray_z_B_m']
         for delta, expect_ok in [(-.20, False), (-.12, False), (0., True), (.12, True)]:
             eye = [CENTER[0], CENTER[1], tray_z+h+delta]
             T = look_at(eye, CENTER, CFG['sampling']['reference_up_B'])
-            geo, reason = geometry_check(CFG, T, 1)
+            geo, reason = geometry_check(CFG, T, index)
             self.assertEqual(reason is None, expect_ok, f'delta={delta}: {reason}')
             if expect_ok:
                 self.assertIsNotNone(geo)

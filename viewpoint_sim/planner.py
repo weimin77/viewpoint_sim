@@ -7,7 +7,7 @@ import numpy as np
 import pybullet as p
 from PIL import Image
 from scipy.spatial.transform import Rotation
-from .acquisition import inspect_capture, save_capture
+from .acquisition import inspect_capture, save_capture, collect_images
 from .geometry import box_vertices, look_at, inv, project, image_contains, tray_ratio, angle_deg
 from .motion import plan, interpolate
 
@@ -195,6 +195,12 @@ def run(world, output):
         for h in s['heights_above_tray_m']}
     from .comparison import compare_heights
     compare_heights(cfg,accepted,output)
+    # Flatten the RGB frames next to the per-view folders so a dataset consumer
+    # has one directory to point at instead of globbing hXX_cXXXX folders. A run
+    # that accepted nothing (the negative-case studies) has no frames to copy.
+    if accepted:
+        collect_images(output, output/"rgb", records=accepted, kinds=("rgb",), force=True)
+        summary['rgb_folder'] = 'rgb'
     (output/"summary.json").write_text(json.dumps(summary,indent=2,ensure_ascii=False),encoding="utf-8")
     (output/"views.json").write_text(json.dumps(accepted,indent=2,ensure_ascii=False),encoding="utf-8")
     from .report import make_report

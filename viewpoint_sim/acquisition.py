@@ -1,10 +1,72 @@
 """Synthetic aligned RGB-D, visible-instance labels, and per-object visibility QA."""
 from pathlib import Path
+import csv
 import json
+import os
+import shutil
 import numpy as np
 from PIL import Image, ImageDraw
 from .geometry import crop_box, cropped_intrinsics, tray_ratio
 from .config import crop_settings
+
+IMAGE_KINDS = ('rgb', 'depth_mm', 'instance', 'food_mask', 'overlay', 'overview')
+MANIFEST_FIELDS = ('id', 'height_index', 'height_above_tray_m',
+                   'z_perturbation_m', 'camera_height_above_tray_m')
+
+
+def collect_images(result, output, records=None, kinds=('rgb',), mode='copy',
+                   force=False):
+    """Copy the per-view images of one run into a single flat folder.
+
+    Every accepted view keeps its images in ``hXX_cXXXX/``, which is convenient
+    for inspection but awkward for downstream training code that just wants all
+    RGB frames. This flattens the requested kinds into ``output`` with an
+    acquisition-ordered prefix and writes ``manifest.csv`` so each file can be
+    traced back to its view and height. Source files are only read.
+    """
+    result, output = Path(result), Path(output)
+    if records is None:
+        views_path = result/'views.json'
+        if not views_path.is_file():
+            raise FileNotFoundError(f"Not a result directory (no views.json): {result}")
+        records = json.loads(views_path.read_text(encoding='utf-8'))
+    records = list(records)
+    if not records:
+        raise ValueError("The result contains no accepted views")
+    if output.exists() and any(output.iterdir()) and not force:
+        raise FileExistsError(f"Output directory is not empty: {output}. Use --force to overwrite.")
+    rows, missing = [], []
+    for index, view in enumerate(records):
+        folder = result/view['id']
+        # Zero padding keeps the alphabetical order equal to the acquisition order.
+        stem = f"{index:03d}_{view['id']}"
+        for kind in kinds:
+            source = folder/(kind+'.png')
+            if not source.is_file():
+                missing.append(str(source))
+                continue
+            target = output/(stem+('' if kind == 'rgb' else '_'+kind)+'.png')
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if mode == 'link':
+                if target.exists() or target.is_symlink():
+                    target.unlink()
+                os.symlink(os.path.relpath(source.resolve(), target.parent.resolve()), target)
+            else:
+                shutil.copy2(source, target)
+            if kind == 'rgb':
+                row = {'file': target.name}
+                row.update({k: view.get(k, '') for k in MANIFEST_FIELDS})
+                row['folder'] = view['id']
+                rows.append(row)
+    if missing:
+        raise FileNotFoundError("Missing image files:\n  "+"\n  ".join(missing[:10]))
+    manifest = output/'manifest.csv'
+    if rows:
+        with manifest.open('w', encoding='utf-8', newline='') as handle:
+            writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+            writer.writeheader()
+            writer.writerows(rows)
+    return rows, manifest
 
 
 def inspect_capture(world, T_BC):

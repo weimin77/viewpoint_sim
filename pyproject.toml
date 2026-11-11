@@ -20,5 +20,15 @@ packages = ["viewpoint_sim", "viewpoint_sim.assets", "viewpoint_sim.configs"]
 "viewpoint_sim.configs" = "configs"
 
 [tool.setuptools.package-data]
-"viewpoint_sim.assets" = ["mycobot_280_m5/*.urdf", "mycobot_280_m5/*.srdf", "mycobot_280_m5/*.json", "mycobot_280_m5/LICENSE", "mycobot_280_m5/meshes/*.stl", "mycobot_280_m5/meshes/*.STL", "fonts/*.woff", "fonts/*.txt", "fonts/*.json"]
+"viewpoint_sim.assets" = [
+    "mycobot_630_pro/*.urdf",
+    "mycobot_630_pro/*.srdf",
+    "mycobot_630_pro/*.json",
+    "mycobot_630_pro/LICENSE",
+    "mycobot_630_pro/meshes/*.stl",
+    "mycobot_630_pro/meshes/*.STL",
+    "fonts/*.woff",
+    "fonts/*.txt",
+    "fonts/*.json",
+]
 "viewpoint_sim.configs" = ["*.json"]

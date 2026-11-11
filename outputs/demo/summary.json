@@ -1,49 +1,35 @@
 {
   "schema_version": 1,
-  "created_utc": "2026-11-09T09:11:28.368620+00:00",
+  "created_utc": "2026-11-11T08:10:15.555942+00:00",
   "seed": 20261106,
   "complete": true,
-  "accepted_total": 12,
+  "accepted_total": 8,
   "heights": [
     {
       "height_above_tray_m": 0.2,
-      "accepted": 4,
-      "target": 4,
-      "attempts": 32,
+      "accepted": 8,
+      "target": 8,
+      "attempts": 15,
       "rejections": {
-        "ik_or_singularity": 11,
-        "food_out_of_rgb_fov": 14,
-        "self_collision": 2,
-        "duplicate_axis": 1
+        "food_out_of_rgb_fov": 7
       },
+      "z_perturbations_m": [
+        0.0040313591419249735,
+        0.007190262044886389,
+        -0.00550889294552399,
+        0.01340285708291047,
+        -0.0053652247257547185,
+        0.009717594404067293,
+        0.01596378918508241,
+        0.011264426949757992
+      ],
       "complete": true,
-      "acceptance_rate": 0.125
-    },
-    {
-      "height_above_tray_m": 0.24,
-      "accepted": 4,
-      "target": 4,
-      "attempts": 4,
-      "rejections": {},
-      "complete": true,
-      "acceptance_rate": 1.0
-    },
-    {
-      "height_above_tray_m": 0.28,
-      "accepted": 4,
-      "target": 4,
-      "attempts": 17,
-      "rejections": {
-        "duplicate_axis": 9,
-        "ik_or_singularity": 3,
-        "environment_collision": 1
-      },
-      "complete": true,
-      "acceptance_rate": 0.23529411764705882
+      "acceptance_rate": 0.5333333333333333
     }
   ],
-  "minimum_axis_angle_deg": 6.28263850037959,
-  "elapsed_seconds": 18.099113344999978,
+  "minimum_axis_angle_deg": 6.399059303362534,
+  "z_perturbation_m": 0.02,
+  "elapsed_seconds": 6.002626829998917,
   "simulation_limits": [
     "Kinematic motion; no dynamics/controller settling",
     "Ideal aligned undistorted RGB-D; no stereo matching/noise/material physics",
@@ -52,22 +38,15 @@
   ],
   "view_ids_ranked_by_tray_ratio": {
     "0.2": [
-      "h00_c0032",
-      "h00_c0027",
-      "h00_c0017",
-      "h00_c0016"
-    ],
-    "0.24": [
-      "h01_c0003",
-      "h01_c0001",
-      "h01_c0002",
-      "h01_c0004"
-    ],
-    "0.28": [
-      "h02_c0017",
-      "h02_c0002",
-      "h02_c0005",
-      "h02_c0012"
+      "h00_c0009",
+      "h00_c0015",
+      "h00_c0003",
+      "h00_c0012",
+      "h00_c0001",
+      "h00_c0004",
+      "h00_c0014",
+      "h00_c0002"
     ]
-  }
+  },
+  "rgb_folder": "rgb"
 }

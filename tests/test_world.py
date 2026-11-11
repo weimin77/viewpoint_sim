@@ -17,7 +17,7 @@ class WorldTests(unittest.TestCase):
         cls.cfg=CFG
         cls.world=World(cls.cfg)
         cls.eye=look_at([CENTER[0]-.02,CENTER[1]+.04,
-                         cls.cfg['roi']['tray_z_B_m']+cls.cfg['sampling']['heights_above_tray_m'][1]],
+                         cls.cfg['roi']['tray_z_B_m']+cls.cfg['sampling']['heights_above_tray_m'][-1]],
                         CENTER, cls.cfg['sampling']['reference_up_B'])
         solutions=cls.world.kin.solve(cls.eye@inv(cls.world.mount),
             np.array(cls.cfg['robot']['home_q_rad']),np.random.default_rng(0),cls.cfg['robot'])
@@ -71,7 +71,10 @@ class WorldTests(unittest.TestCase):
 
     def test_collision_check_rejects_robot_through_obstacle(self):
         w=self.world;w.set_q(self.sol)
-        position=p.getLinkState(w.robot,w.link_ids['joint4'],computeForwardKinematics=True,physicsClientId=w.cid)[4]
+        # Use the third actuated joint's link; its name differs per model, so it
+        # is resolved from the loaded chain instead of hard-coded.
+        link=w.joints[2]
+        position=p.getLinkState(w.robot,link,computeForwardKinematics=True,physicsClientId=w.cid)[4]
         obstacle=w.box('test_collision',position,[.06,.06,.06],[.7,.1,.1,1])
         try:
             self.assertTrue(w.collision(self.sol).startswith('environment_collision'))
@@ -87,12 +90,13 @@ class WorldTests(unittest.TestCase):
         from viewpoint_sim.acquisition import save_capture
         from viewpoint_sim.planner import geometry_check
         w=self.world;w.set_q(self.sol);cap=inspect_capture(w,w.camera_pose())
-        geo,reason=geometry_check(w.cfg,w.camera_pose(),1);self.assertIsNone(reason)
+        index=len(w.cfg['sampling']['heights_above_tray_m'])-1
+        geo,reason=geometry_check(w.cfg,w.camera_pose(),index);self.assertIsNone(reason)
         cam=(w.cfg['camera']['rgb']['width'],w.cfg['camera']['rgb']['height'])
         for enabled in (False,True):
             cfg=copy.deepcopy(w.cfg);cfg['quality']['crop']={'enabled':enabled,'padding_px':10}
             with tempfile.TemporaryDirectory() as d:
-                record=save_capture(Path(d)/'v',dict(cap),{'id':'v','height_index':1},geo,cfg)
+                record=save_capture(Path(d)/'v',dict(cap),{'id':'v','height_index':index},geo,cfg)
                 folder=Path(d)/'v';files=sorted(p.name for p in folder.iterdir())
                 self.assertEqual(any(n.startswith('crop_') for n in files),enabled)
                 for name in ('rgb','depth_mm','instance','food_mask'):
@@ -102,7 +106,9 @@ class WorldTests(unittest.TestCase):
                 self.assertEqual('crop_bbox_xyxy' in record,enabled)
 
     def test_nonadjacent_arm_self_collision_is_rejected(self):
-        q=np.array([1.908605,-.440094,.257679,-2.454708,1.427248,.23887])
+        # Folded arm: the base and the third link overlap well before any joint
+        # limit, so this must be reported as a self collision.
+        q=np.array([0.857818,-1.441135,-2.39419,-2.859256,1.830814,2.498657])
         self.assertTrue(self.world.collision(q).startswith('self_collision'))
 
 
@@ -122,15 +128,18 @@ class RendererTests(unittest.TestCase):
 
     def test_off_center_intrinsics_and_optical_depth(self):
         cfg=load_config();cfg['scene']['foods']=[];cfg['scene']['obstacles']=[]
+        tray=cfg['scene']['tray']
+        cx,cy=tray['position_B_m'][0],tray['position_B_m'][1]
+        top=cfg['roi']['tray_z_B_m']
         with World(cfg) as w:
             c=dict(cfg['camera']['rgb']);c['cx']=280.;c['cy']=155.
-            T=look_at([.2,0,.35],[.2,0,.02])
+            T=look_at([cx,cy,top+.33],[cx,cy,top])
             rgb,z,ids=w.render(T,c)
             self.assertAlmostEqual(float(z[155,280]),.33,places=4)
-            marker=w.box('marker',[.235,.025,.08],[.006,.006,.006],[1,0,0,1])
+            marker=w.box('marker',[cx+.035,cy+.025,top+.06],[.006,.006,.006],[1,0,0,1])
             _,_,ids=w.render(T,c)
             yy,xx=np.where(ids==marker)
-            expected,_=project([[.235,.025,.083]],T,c)
+            expected,_=project([[cx+.035,cy+.025,top+.063]],T,c)
             actual=np.array([(xx.min()+xx.max())/2,(yy.min()+yy.max())/2])
             np.testing.assert_allclose(actual,expected[0],atol=1.5)
 

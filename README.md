@@ -8,7 +8,7 @@
 
 先打开随包附带的 `outputs/demo/report.html`，无需安装依赖即可浏览已运行的结果。三维运动预览为同目录下的 `motion_preview.gif`。运行和修改仿真需要按下文安装 Python 依赖。
 
-参数逐项说明见 `docs/config_reference.md`，ROS 2 迁移计划见 `docs/ros2_migration_plan.md`。
+参数逐项说明见 `docs/config_reference.md`，代码结构与场景建模说明见 `docs/simulation_architecture.md`，ROS 2 迁移计划见 `docs/ros2_migration_plan.md`。
 
 ## 1. 当前实现范围
 

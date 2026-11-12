@@ -1,0 +1,316 @@
+{
+  "units": "m_rad",
+  "description": "MuJoCo + official myCobot Pro 630, open-top oven and internal rack; example calibration",
+  "seed": 20261112,
+  "robot": {
+    "urdf": "assets/mycobot_pro_630/mycobot_pro_630.urdf",
+    "srdf": "assets/mycobot_pro_630/mycobot.srdf",
+    "flange_link": "link6",
+    "base_position_B_m": [
+      0,
+      0,
+      0
+    ],
+    "home_q_rad": [
+      0,
+      0.4,
+      -1.2,
+      0.4,
+      1.0,
+      0
+    ],
+    "ik_starts": 8,
+    "ik_position_tolerance_m": 0.0005,
+    "ik_rotation_tolerance_deg": 0.1,
+    "joint_limit_margin_rad": 0.01,
+    "min_scaled_jacobian_singular_value": 0.003,
+    "model": "myCobot Pro 630"
+  },
+  "camera": {
+    "description": "D405-like ideal aligned undistorted pinhole; intrinsics estimated from nominal FOV, replace by SDK intrinsics",
+    "rgb": {
+      "width": 640,
+      "height": 360,
+      "fx": 337.2,
+      "fy": 324.7,
+      "cx": 319.5,
+      "cy": 179.5
+    },
+    "depth": {
+      "width": 640,
+      "height": 360,
+      "fx": 337.2,
+      "fy": 324.7,
+      "cx": 319.5,
+      "cy": 179.5
+    },
+    "T_CD": [
+      [
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1
+      ]
+    ],
+    "depth_range_m": [
+      0.07,
+      0.5
+    ],
+    "mount": {
+      "translation_F_m": [
+        0.075,
+        0,
+        0
+      ],
+      "rpy_FC_rad": [
+        0,
+        1.5707963267948966,
+        0
+      ]
+    },
+    "housing_size_m": [
+      0.042,
+      0.042,
+      0.023
+    ],
+    "bracket_size_m": [
+      0.052,
+      0.014,
+      0.014
+    ],
+    "bracket_center_F_m": [
+      0.026,
+      0,
+      0
+    ]
+  },
+  "roi": {
+    "food_min_B": [
+      0.235,
+      -0.08,
+      0.095
+    ],
+    "food_max_B": [
+      0.465,
+      0.08,
+      0.16499999999999998
+    ],
+    "margin_m": 0.003,
+    "tray_z_B_m": 0.095,
+    "tray_corners_B": [
+      [
+        0.2,
+        -0.115,
+        0.095
+      ],
+      [
+        0.5,
+        -0.115,
+        0.095
+      ],
+      [
+        0.5,
+        0.115,
+        0.095
+      ],
+      [
+        0.2,
+        0.115,
+        0.095
+      ]
+    ],
+    "teach_timestamp": "example-not-measured",
+    "tcp_probe_offset_m": [
+      0,
+      0,
+      0.1
+    ]
+  },
+  "sampling": {
+    "x_B_m": [
+      0.24,
+      0.46
+    ],
+    "y_B_m": [
+      -0.12,
+      0.12
+    ],
+    "heights_above_tray_m": [
+      0.33
+    ],
+    "target_per_height": 2,
+    "max_attempts_per_height": 50,
+    "max_tilt_deg": 40,
+    "min_axis_angle_deg": 6,
+    "deduplicate_across_heights": false,
+    "reference_up_B": [
+      0,
+      1,
+      0
+    ],
+    "image_margin_fraction": [
+      0.1,
+      0.1
+    ],
+    "tray_min_ratio_by_height": [
+      0.0
+    ],
+    "z_jitter_m": 0.008
+  },
+  "motion": {
+    "collision_margin_m": 0.002,
+    "edge_resolution_rad": 0.025,
+    "rrt_step_rad": 0.18,
+    "rrt_iterations": 500,
+    "replay_seconds_per_edge": 0.05,
+    "execution_mode": "position_control",
+    "timestep_s": 0.002,
+    "max_joint_speed_rad_s": 0.45,
+    "max_joint_accel_rad_s2": 1.0,
+    "settle_timeout_s": 4.0,
+    "settle_joint_error_rad": 0.0005,
+    "settle_velocity_rad_s": 0.003,
+    "settle_hold_s": 0.1
+  },
+  "quality": {
+    "min_visible_fraction_per_food": 0.9,
+    "min_valid_depth_fraction": 0.98,
+    "min_food_pixels": 100,
+    "min_food_bbox_side_px": 6,
+    "crop_padding_px": 10,
+    "visibility_mode": "report"
+  },
+  "scene": {
+    "table": {
+      "position_B_m": [
+        0.25,
+        0,
+        -0.055
+      ],
+      "size_m": [
+        1.1,
+        0.85,
+        0.1
+      ]
+    },
+    "tray": {
+      "position_B_m": [
+        0.35,
+        0,
+        0.08499999999999999
+      ],
+      "size_m": [
+        0.3,
+        0.23,
+        0.02
+      ],
+      "lip_height_m": 0.006
+    },
+    "obstacles": [],
+    "foods": [
+      {
+        "name": "food_A",
+        "shape": "box",
+        "position_B_m": [
+          0.292,
+          -0.04,
+          0.121
+        ],
+        "size_m": [
+          0.075,
+          0.045,
+          0.052
+        ],
+        "rgba": [
+          0.85,
+          0.37,
+          0.1,
+          1
+        ]
+      },
+      {
+        "name": "food_B",
+        "shape": "sphere",
+        "position_B_m": [
+          0.39,
+          0.035,
+          0.125
+        ],
+        "radius_m": 0.03,
+        "rgba": [
+          0.92,
+          0.67,
+          0.14,
+          1
+        ]
+      },
+      {
+        "name": "food_C",
+        "shape": "box",
+        "position_B_m": [
+          0.432,
+          -0.042,
+          0.118
+        ],
+        "size_m": [
+          0.036,
+          0.036,
+          0.046
+        ],
+        "rgba": [
+          0.33,
+          0.65,
+          0.3,
+          1
+        ]
+      }
+    ],
+    "oven": {
+      "enabled": true,
+      "x_B_m": [
+        0.18,
+        0.58
+      ],
+      "y_B_m": [
+        -0.25,
+        0.25
+      ],
+      "z_B_m": [
+        0.005,
+        0.65
+      ],
+      "wall_thickness_m": 0.014,
+      "rack_z_B_m": 0.071,
+      "rack_rod_radius_m": 0.003,
+      "rail_heights_B_m": [
+        0.071,
+        0.22,
+        0.37
+      ]
+    }
+  },
+  "engine": "mujoco",
+  "schema_version": 2,
+  "postprocess": {
+    "crop_mode": "tray_roi",
+    "crop_padding_px": 10
+  }
+}

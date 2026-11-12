@@ -3,11 +3,11 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "food-viewpoint-sim"
-version = "0.1.0"
-description = "myCobot 280 eye-in-hand constrained random RGB-D acquisition simulation"
-requires-python = ">=3.10,<3.12"
-dependencies = ["numpy>=1.24,<3", "scipy>=1.10,<2", "Pillow>=10,<13", "pybullet==3.2.7"]
+name = "mujoco-food-viewpoint-sim"
+version = "0.2.0"
+description = "MuJoCo myCobot Pro 630 eye-in-hand constrained viewpoint acquisition"
+requires-python = ">=3.11,<3.14"
+dependencies = ["mujoco==3.3.7", "numpy>=1.26,<3", "scipy>=1.12,<2", "Pillow>=10,<14"]
 
 [project.scripts]
 viewpoint-sim = "viewpoint_sim.cli:main"
@@ -20,15 +20,5 @@ packages = ["viewpoint_sim", "viewpoint_sim.assets", "viewpoint_sim.configs"]
 "viewpoint_sim.configs" = "configs"
 
 [tool.setuptools.package-data]
-"viewpoint_sim.assets" = [
-    "mycobot_630_pro/*.urdf",
-    "mycobot_630_pro/*.srdf",
-    "mycobot_630_pro/*.json",
-    "mycobot_630_pro/LICENSE",
-    "mycobot_630_pro/meshes/*.stl",
-    "mycobot_630_pro/meshes/*.STL",
-    "fonts/*.woff",
-    "fonts/*.txt",
-    "fonts/*.json",
-]
+"viewpoint_sim.assets" = ["mycobot_pro_630/*.urdf", "mycobot_pro_630/*.srdf", "mycobot_pro_630/*.obj", "mycobot_pro_630/*.json", "mycobot_pro_630/*.yaml", "mycobot_pro_630/LICENSE", "fonts/*.woff", "fonts/*.txt", "fonts/*.json"]
 "viewpoint_sim.configs" = ["*.json"]

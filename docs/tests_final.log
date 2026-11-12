@@ -1,0 +1,18 @@
+test_defaults_and_user_options (test_mujoco_workcell.GeometryAndConfigTests.test_defaults_and_user_options) ... ok
+test_look_at_and_mount_transform (test_mujoco_workcell.GeometryAndConfigTests.test_look_at_and_mount_transform) ... ok
+test_low_and_high_heights_are_rejected (test_mujoco_workcell.GeometryAndConfigTests.test_low_and_high_heights_are_rejected) ... ok
+test_unit_conversion_matches_robot_scale (test_mujoco_workcell.GeometryAndConfigTests.test_unit_conversion_matches_robot_scale) ... ok
+test_default_crop_disabled_and_optional_crop_exact (test_mujoco_workcell.MuJoCoWorldTests.test_default_crop_disabled_and_optional_crop_exact) ... ok
+test_fixed_obstacle_changes_feasibility (test_mujoco_workcell.MuJoCoWorldTests.test_fixed_obstacle_changes_feasibility) ... ok
+test_isolated_food_silhouettes (test_mujoco_workcell.MuJoCoWorldTests.test_isolated_food_silhouettes) ... ok
+test_mujoco_fk_matches_official_urdf (test_mujoco_workcell.MuJoCoWorldTests.test_mujoco_fk_matches_official_urdf) ... ok
+test_off_center_camera_intrinsics (test_mujoco_workcell.MuJoCoWorldTests.test_off_center_camera_intrinsics) ... ok
+test_oven_top_is_open (test_mujoco_workcell.MuJoCoWorldTests.test_oven_top_is_open) ... ok
+test_position_servos_settle_using_physics_steps (test_mujoco_workcell.MuJoCoWorldTests.test_position_servos_settle_using_physics_steps) ... ok
+test_rgb_depth_and_segmentation_are_aligned (test_mujoco_workcell.MuJoCoWorldTests.test_rgb_depth_and_segmentation_are_aligned) ... ok
+test_safe_endpoints_do_not_prove_the_edge_safe (test_mujoco_workcell.PathTests.test_safe_endpoints_do_not_prove_the_edge_safe) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 2.386s
+
+OK

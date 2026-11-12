@@ -1,11 +1,11 @@
 {
   "units": "m_rad",
-  "description": "Example open-front oven workcell for Elephant Robotics myCobot 630 Pro (Pro630 URDF); NOT measured hardware calibration",
+  "description": "MuJoCo + official myCobot Pro 630, open-top oven and internal rack; example calibration",
   "seed": 20261106,
   "robot": {
-    "urdf": "assets/mycobot_630_pro/mycobot.urdf",
-    "srdf": "assets/mycobot_630_pro/mycobot.srdf",
-    "flange_link": "flange",
+    "urdf": "assets/mycobot_pro_630/mycobot_pro_630.urdf",
+    "srdf": "assets/mycobot_pro_630/mycobot.srdf",
+    "flange_link": "link6",
     "base_position_B_m": [
       0,
       0,
@@ -13,21 +13,21 @@
     ],
     "home_q_rad": [
       0,
-      -0.4,
-      0.8,
+      0.4,
       -1.2,
-      0,
+      0.4,
+      1.0,
       0
     ],
     "ik_starts": 8,
     "ik_position_tolerance_m": 0.0005,
     "ik_rotation_tolerance_deg": 0.1,
-    "ik_characteristic_length_m": 0.4,
     "joint_limit_margin_rad": 0.01,
-    "min_scaled_jacobian_singular_value": 0.003
+    "min_scaled_jacobian_singular_value": 0.003,
+    "model": "myCobot Pro 630"
   },
   "camera": {
-    "description": "D405-like ideal aligned undistorted pinhole on the tool axis; placeholder bracket, replace with measured extrinsics",
+    "description": "D405-like ideal aligned undistorted pinhole; intrinsics estimated from nominal FOV, replace by SDK intrinsics",
     "rgb": {
       "width": 640,
       "height": 360,
@@ -75,15 +75,14 @@
       0.5
     ],
     "mount": {
-      "description": "placeholder axial mount: camera optical +Z along the flange +Z (tool axis), optical centre 59 mm out from the flange face",
       "translation_F_m": [
+        0.075,
         0,
-        0,
-        0.059
+        0
       ],
       "rpy_FC_rad": [
         0,
-        0,
+        1.5707963267948966,
         0
       ]
     },
@@ -93,44 +92,49 @@
       0.023
     ],
     "bracket_size_m": [
-      0.012,
-      0.012,
-      0.036
+      0.052,
+      0.014,
+      0.014
+    ],
+    "bracket_center_F_m": [
+      0.026,
+      0,
+      0
     ]
   },
   "roi": {
     "food_min_B": [
-      0.31,
-      -0.06,
-      0.02
+      0.235,
+      -0.08,
+      0.095
     ],
     "food_max_B": [
-      0.49,
-      0.06,
-      0.08
+      0.465,
+      0.08,
+      0.16499999999999998
     ],
-    "margin_m": 0.002,
-    "tray_z_B_m": 0.02,
+    "margin_m": 0.003,
+    "tray_z_B_m": 0.095,
     "tray_corners_B": [
       [
-        0.3,
-        -0.162,
-        0.02
+        0.2,
+        -0.115,
+        0.095
       ],
       [
         0.5,
-        -0.162,
-        0.02
+        -0.115,
+        0.095
       ],
       [
         0.5,
-        0.162,
-        0.02
+        0.115,
+        0.095
       ],
       [
-        0.3,
-        0.162,
-        0.02
+        0.2,
+        0.115,
+        0.095
       ]
     ],
     "teach_timestamp": "example-not-measured",
@@ -142,34 +146,38 @@
   },
   "sampling": {
     "x_B_m": [
-      0.33,
-      0.47
+      0.24,
+      0.46
     ],
     "y_B_m": [
-      -0.07,
-      0.07
+      -0.12,
+      0.12
     ],
     "heights_above_tray_m": [
-      0.2
+      0.3,
+      0.36,
+      0.42
     ],
-    "z_perturbation_m": 0.02,
-    "target_per_height": 8,
-    "max_attempts_per_height": 250,
+    "target_per_height": 4,
+    "max_attempts_per_height": 180,
     "max_tilt_deg": 40,
     "min_axis_angle_deg": 6,
-    "deduplicate_across_heights": true,
+    "deduplicate_across_heights": false,
     "reference_up_B": [
       0,
       1,
       0
     ],
     "image_margin_fraction": [
-      0.05,
-      0.05
+      0.1,
+      0.1
     ],
     "tray_min_ratio_by_height": [
+      0.0,
+      0.0,
       0.0
-    ]
+    ],
+    "z_jitter_m": 0.0
   },
   "motion": {
     "collision_margin_m": 0.002,
@@ -177,66 +185,48 @@
     "rrt_step_rad": 0.18,
     "rrt_iterations": 500,
     "replay_seconds_per_edge": 0.05,
-    "replay_speed_rad_per_s": 1.2,
-    "replay_pause_seconds": 0.5
+    "execution_mode": "position_control",
+    "timestep_s": 0.002,
+    "max_joint_speed_rad_s": 0.45,
+    "max_joint_accel_rad_s2": 1.0,
+    "settle_timeout_s": 4.0,
+    "settle_joint_error_rad": 0.0005,
+    "settle_velocity_rad_s": 0.003,
+    "settle_hold_s": 0.1
   },
   "quality": {
     "min_visible_fraction_per_food": 0.9,
     "min_valid_depth_fraction": 0.98,
     "min_food_pixels": 100,
     "min_food_bbox_side_px": 6,
-    "crop": {
-      "enabled": false,
-      "padding_px": 10
-    }
+    "crop_padding_px": 10,
+    "visibility_mode": "report"
   },
   "scene": {
     "table": {
       "position_B_m": [
-        0.4,
+        0.25,
         0,
-        -0.086
+        -0.055
       ],
       "size_m": [
-        0.6,
-        0.5,
+        1.1,
+        0.85,
         0.1
       ]
     },
     "tray": {
       "position_B_m": [
-        0.4,
+        0.35,
         0,
-        0.014
+        0.08499999999999999
       ],
       "size_m": [
-        0.2,
-        0.324,
-        0.012
-      ]
-    },
-    "oven": {
-      "_comment": "open-front oven: the -X face is the door the arm reaches through, the +X front panel spans the full outer width so the rear corners overlap",
-      "x_m": [
-        0.24,
-        0.62
+        0.3,
+        0.23,
+        0.02
       ],
-      "y_m": [
-        -0.176,
-        0.176
-      ],
-      "floor_top_z_m": -0.03,
-      "floor_thickness_m": 0.006,
-      "wall_thickness_m": 0.012,
-      "height_m": 0.19,
-      "top": false
-    },
-    "rack": {
-      "_comment": "wire shelf carried by the two side walls (no legs): the outer rails sit flush on the left/right wall faces, the cross bars span the full inner width, and the shelf top is the tray bottom",
-      "margin_m": 0.002,
-      "wire_size_m": 0.003,
-      "longitudinal_rails": 3,
-      "cross_slats": 5
+      "lip_height_m": 0.006
     },
     "obstacles": [],
     "foods": [
@@ -244,14 +234,14 @@
         "name": "food_A",
         "shape": "box",
         "position_B_m": [
-          0.35,
-          -0.03,
-          0.041
+          0.292,
+          -0.04,
+          0.121
         ],
         "size_m": [
-          0.055,
-          0.032,
-          0.042
+          0.075,
+          0.045,
+          0.052
         ],
         "rgba": [
           0.85,
@@ -264,11 +254,11 @@
         "name": "food_B",
         "shape": "sphere",
         "position_B_m": [
-          0.41,
-          0.025,
-          0.042
+          0.39,
+          0.035,
+          0.125
         ],
-        "radius_m": 0.022,
+        "radius_m": 0.03,
         "rgba": [
           0.92,
           0.67,
@@ -280,14 +270,14 @@
         "name": "food_C",
         "shape": "box",
         "position_B_m": [
-          0.455,
-          -0.03,
-          0.038
+          0.432,
+          -0.042,
+          0.118
         ],
         "size_m": [
-          0.028,
-          0.028,
-          0.036
+          0.036,
+          0.036,
+          0.046
         ],
         "rgba": [
           0.33,
@@ -296,6 +286,35 @@
           1
         ]
       }
-    ]
+    ],
+    "oven": {
+      "enabled": true,
+      "x_B_m": [
+        0.18,
+        0.58
+      ],
+      "y_B_m": [
+        -0.25,
+        0.25
+      ],
+      "z_B_m": [
+        0.005,
+        0.65
+      ],
+      "wall_thickness_m": 0.014,
+      "rack_z_B_m": 0.071,
+      "rack_rod_radius_m": 0.003,
+      "rail_heights_B_m": [
+        0.071,
+        0.22,
+        0.37
+      ]
+    }
+  },
+  "engine": "mujoco",
+  "schema_version": 2,
+  "postprocess": {
+    "crop_mode": "none",
+    "crop_padding_px": 10
   }
 }

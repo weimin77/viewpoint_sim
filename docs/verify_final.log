@@ -1,0 +1,2 @@
+PASS: 12 MuJoCo captures verified; joint paths, optical poses, image alignment, jitter and crop mode.
+PASS: 2 MuJoCo captures verified; joint paths, optical poses, image alignment, jitter and crop mode.

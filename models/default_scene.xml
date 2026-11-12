@@ -1,0 +1,175 @@
+<mujoco model="myCobot_Pro_630_viewpoint_workcell">
+  <compiler angle="radian" meshdir="../assets/mycobot_pro_630" autolimits="true" />
+  <option timestep="0.002" integrator="implicitfast" gravity="0 0 -9.81">
+    <flag nativeccd="enable" />
+  </option>
+  <size njmax="3000" nconmax="1000" />
+  <visual>
+    <global offwidth="1000" offheight="700" azimuth="135" elevation="-20" />
+    <quality shadowsize="2048" offsamples="4" />
+    <headlight ambient=".45 .45 .45" diffuse=".5 .5 .5" specular=".1 .1 .1" />
+    <map znear=".002" zfar="20" />
+  </visual>
+  <default>
+    <geom friction=".7 .01 .001" solref=".02 1" />
+    <joint damping="4" armature=".02" />
+  </default>
+  <asset>
+    <texture name="floor_tex" type="2d" builtin="checker" rgb1=".20 .24 .29" rgb2=".24 .28 .33" width="256" height="256" />
+    <material name="floor_mat" texture="floor_tex" texrepeat="5 4" reflectance=".05" />
+    <mesh name="base_mesh" file="base.obj" />
+    <mesh name="link1_mesh" file="link1.obj" />
+    <mesh name="link2_mesh" file="link2.obj" />
+    <mesh name="link3_mesh" file="link3.obj" />
+    <mesh name="link4_mesh" file="link4.obj" />
+    <mesh name="link5_mesh" file="link5.obj" />
+    <mesh name="link6_mesh" file="link6.obj" />
+  </asset>
+  <worldbody>
+    <light pos="-.1 -.5 1.7" dir=".2 .3 -1" diffuse=".85 .85 .85" castshadow="true" />
+    <light pos=".6 .25 .45" dir="-.3 -.2 -.8" diffuse=".35 .35 .30" castshadow="false" />
+    <body name="table" pos="0.25 0 -0.055">
+      <geom name="env_table" type="box" size="0.55 0.425 0.05" material="floor_mat" group="0" />
+    </body>
+    <body name="oven_floor" pos="0.38 0 -0.002">
+      <geom name="env_oven_floor" type="box" size="0.214 0.264 0.007" rgba="0.4 0.43 0.47 1" group="0" />
+    </body>
+    <body name="oven_back" pos="0.587 0 0.3275">
+      <geom name="env_oven_back" type="box" size="0.007 0.264 0.3225" rgba="0.4 0.43 0.47 1" group="0" />
+    </body>
+    <body name="oven_left" pos="0.38 -0.257 0.3275">
+      <geom name="env_oven_left" type="box" size="0.2 0.007 0.3225" rgba="0.4 0.43 0.47 1" group="0" />
+    </body>
+    <body name="oven_right" pos="0.38 0.257 0.3275">
+      <geom name="env_oven_right" type="box" size="0.2 0.007 0.3225" rgba="0.4 0.43 0.47 1" group="0" />
+    </body>
+    <body name="oven_rack">
+      <geom name="env_rack_bar_0" type="capsule" fromto="0.195 -0.23 0.071 0.565 -0.23 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rack_bar_1" type="capsule" fromto="0.195 -0.191666666667 0.071 0.565 -0.191666666667 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rack_bar_2" type="capsule" fromto="0.195 -0.153333333333 0.071 0.565 -0.153333333333 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rack_bar_3" type="capsule" fromto="0.195 -0.115 0.071 0.565 -0.115 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rack_bar_4" type="capsule" fromto="0.195 -0.0766666666667 0.071 0.565 -0.0766666666667 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rack_bar_5" type="capsule" fromto="0.195 -0.0383333333333 0.071 0.565 -0.0383333333333 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rack_bar_6" type="capsule" fromto="0.195 2.77555756156e-17 0.071 0.565 2.77555756156e-17 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rack_bar_7" type="capsule" fromto="0.195 0.0383333333333 0.071 0.565 0.0383333333333 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rack_bar_8" type="capsule" fromto="0.195 0.0766666666667 0.071 0.565 0.0766666666667 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rack_bar_9" type="capsule" fromto="0.195 0.115 0.071 0.565 0.115 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rack_bar_10" type="capsule" fromto="0.195 0.153333333333 0.071 0.565 0.153333333333 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rack_bar_11" type="capsule" fromto="0.195 0.191666666667 0.071 0.565 0.191666666667 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rack_bar_12" type="capsule" fromto="0.195 0.23 0.071 0.565 0.23 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rack_cross_0" type="capsule" fromto="0.195 -0.23 0.071 0.195 0.23 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rack_cross_1" type="capsule" fromto="0.565 -0.23 0.071 0.565 0.23 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rail_0_0" type="capsule" fromto="0.19 -0.242 0.071 0.57 -0.242 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rail_0_1" type="capsule" fromto="0.19 0.242 0.071 0.57 0.242 0.071" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rail_1_0" type="capsule" fromto="0.19 -0.242 0.22 0.57 -0.242 0.22" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rail_1_1" type="capsule" fromto="0.19 0.242 0.22 0.57 0.242 0.22" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rail_2_0" type="capsule" fromto="0.19 -0.242 0.37 0.57 -0.242 0.37" size="0.003" rgba=".68 .71 .73 1" group="0" />
+      <geom name="env_rail_2_1" type="capsule" fromto="0.19 0.242 0.37 0.57 0.242 0.37" size="0.003" rgba=".68 .71 .73 1" group="0" />
+    </body>
+    <body name="tray" pos="0.35 0 0.085">
+      <geom name="env_tray" type="box" size="0.15 0.115 0.01" rgba="0.25 0.28 0.31 1" group="0" />
+    </body>
+    <body name="tray_left" pos="0.35 -0.1135 0.098">
+      <geom name="env_tray_left" type="box" size="0.15 0.0015 0.003" rgba="0.35 0.38 0.4 1" group="0" />
+    </body>
+    <body name="tray_right" pos="0.35 0.1135 0.098">
+      <geom name="env_tray_right" type="box" size="0.15 0.0015 0.003" rgba="0.35 0.38 0.4 1" group="0" />
+    </body>
+    <body name="tray_front" pos="0.2015 0 0.098">
+      <geom name="env_tray_front" type="box" size="0.0015 0.115 0.003" rgba="0.35 0.38 0.4 1" group="0" />
+    </body>
+    <body name="tray_back" pos="0.4985 0 0.098">
+      <geom name="env_tray_back" type="box" size="0.0015 0.115 0.003" rgba="0.35 0.38 0.4 1" group="0" />
+    </body>
+    <body name="food_A" pos="0.292 -0.04 0.121">
+      <geom name="food_food_A" type="box" size="0.0375 0.0225 0.026" rgba="0.85 0.37 0.1 1" group="2" />
+    </body>
+    <body name="food_B" pos="0.39 0.035 0.125">
+      <geom name="food_food_B" type="sphere" size="0.03" rgba="0.92 0.67 0.14 1" group="2" />
+    </body>
+    <body name="food_C" pos="0.432 -0.042 0.118">
+      <geom name="food_food_C" type="box" size="0.018 0.018 0.023" rgba="0.33 0.65 0.3 1" group="2" />
+    </body>
+    <body name="base" pos="0 0 0">
+      <geom name="vis_base" type="mesh" mesh="base_mesh" pos="0 0 0" quat="1 0 0 0" rgba="0.25 0.28 0.32 1" group="1" contype="0" conaffinity="0" mass="0" />
+      <geom name="col_base" type="mesh" mesh="base_mesh" pos="0 0 0" quat="1 0 0 0" rgba=".8 .2 .2 .15" group="3" mass="0" />
+      <body name="link1" pos="0 0 0.205" quat="1 0 0 0" gravcomp="1">
+        <joint name="joint1_to_base" type="hinge" axis="0 0 1" range="-3.14 3.14159" />
+        <inertial pos="0 0 0" mass="0.9" diaginertia=".008 .008 .008" />
+        <geom name="vis_link1" type="mesh" mesh="link1_mesh" pos="0 0 -0.045" quat="1 0 0 0" rgba="0.7 0.73 0.76 1" group="1" contype="0" conaffinity="0" mass="0" />
+        <geom name="col_link1" type="mesh" mesh="link1_mesh" pos="0 0 -0.045" quat="1 0 0 0" rgba=".8 .2 .2 .15" group="3" mass="0" />
+        <body name="link2" pos="0 0 0" quat="-0.500023162772 -0.499974999463 0.500024999463 -0.499976835978" gravcomp="1">
+          <joint name="joint2_to_joint1" type="hinge" axis="0 0 -1" range="-3.14159 3.14159" />
+          <inertial pos="0 0 0" mass="1.4" diaginertia=".008 .008 .008" />
+          <geom name="vis_link2" type="mesh" mesh="link2_mesh" pos="0 0 -0.06" quat="1.32679489668e-06 0.999999999999 0 0" rgba="0.38 0.41 0.45 1" group="1" contype="0" conaffinity="0" mass="0" />
+          <geom name="col_link2" type="mesh" mesh="link2_mesh" pos="0 0 -0.06" quat="1.32679489668e-06 0.999999999999 0 0" rgba=".8 .2 .2 .15" group="3" mass="0" />
+          <body name="link3" pos="0.269 0 0" quat="1 0 0 0" gravcomp="1">
+            <joint name="joint3_to_joint2" type="hinge" axis="0 0 -1" range="-2.61 2.618" />
+            <inertial pos="0 0 0" mass="1.2" diaginertia=".008 .008 .008" />
+            <geom name="vis_link3" type="mesh" mesh="link3_mesh" pos="0 0 -0.06" quat="1 0 0 0" rgba="0.38 0.41 0.45 1" group="1" contype="0" conaffinity="0" mass="0" />
+            <geom name="col_link3" type="mesh" mesh="link3_mesh" pos="0 0 -0.06" quat="1 0 0 0" rgba=".8 .2 .2 .15" group="3" mass="0" />
+            <body name="link4" pos="0.266 0 -0.088" quat="0.707105482511 0 0 0.707108079859" gravcomp="1">
+              <joint name="joint4_to_joint3" type="hinge" axis="0 0 -1" range="-2.9670 2.9670" />
+              <inertial pos="0 0 0" mass="0.45" diaginertia=".008 .008 .008" />
+              <geom name="vis_link4" type="mesh" mesh="link4_mesh" pos="0 0 0.039" quat="9.38230853805e-07 0.707140837031 0.707072723701 9.38140481387e-07" rgba="0.69 0.71 0.73 1" group="1" contype="0" conaffinity="0" mass="0" />
+              <geom name="col_link4" type="mesh" mesh="link4_mesh" pos="0 0 0.039" quat="9.38230853805e-07 0.707140837031 0.707072723701 9.38140481387e-07" rgba=".8 .2 .2 .15" group="3" mass="0" />
+              <body name="link5" pos="0 -0.095 0" quat="0.500048163397 0.49999999768 -0.49999999768 0.499951836603" gravcomp="1">
+                <joint name="joint5_to_joint4" type="hinge" axis="0 0 1" range="-2.93 2.9321" />
+                <inertial pos="0 0 0" mass="0.35" diaginertia=".008 .008 .008" />
+                <geom name="vis_link5" type="mesh" mesh="link5_mesh" pos="0 0 -0.04" quat="2.6794896585e-08 0 0 1" rgba="0.67 0.69 0.72 1" group="1" contype="0" conaffinity="0" mass="0" />
+                <geom name="col_link5" type="mesh" mesh="link5_mesh" pos="0 0 -0.04" quat="2.6794896585e-08 0 0 1" rgba=".8 .2 .2 .15" group="3" mass="0" />
+                <body name="link6" pos="-0.053 0 0" quat="-1.76038469785e-12 1.32679489668e-06 0.999999999998 -1.32679489668e-06" gravcomp="1">
+                  <joint name="joint6_to_joint5" type="hinge" axis="-1 0 0" range="-3.03 3.0368" />
+                  <inertial pos="0 0 0" mass="0.15" diaginertia=".008 .008 .008" />
+                  <geom name="vis_link6" type="mesh" mesh="link6_mesh" pos="-0.011 0 0" quat="0.707140837031 0 0.707072723701 0" rgba="0.32 0.35 0.39 1" group="1" contype="0" conaffinity="0" mass="0" />
+                  <geom name="col_link6" type="mesh" mesh="link6_mesh" pos="-0.011 0 0" quat="0.707140837031 0 0.707072723701 0" rgba=".8 .2 .2 .15" group="3" mass="0" />
+                  <body name="camera_housing" pos="0.0635 0 -2.55351295664e-18" quat="0.707106781187 0 0.707106781187 0">
+                    <geom name="col_camera_housing" type="box" size="0.021 0.021 0.0115" rgba=".08 .14 .20 1" group="1" />
+                  </body>
+                  <body name="camera_bracket" pos="0.026 0 0">
+                    <geom name="col_camera_bracket" type="box" size="0.026 0.007 0.007" rgba=".10 .65 .68 1" group="1" />
+                  </body>
+                  <site name="camera_optical" pos="0.075 0 0" quat="0.707106781187 0 0.707106781187 0" size=".003" rgba="0 0 0 0" />
+                  <camera name="wrist_camera" pos="0.075 0 0" quat="0 0.707106781187 0 -0.707106781187" sensorsize="640 360" resolution="640 360" focal="337.2 324.7" principal="0 0" ipd="0" />
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+    <body name="render_pose" mocap="true" pos="0 0 1">
+      <camera name="render_camera" sensorsize="640 360" resolution="640 360" focal="337.2 324.7" principal="0 0" ipd="0" />
+    </body>
+  </worldbody>
+  <contact>
+    <exclude body1="base" body2="link1" />
+    <exclude body1="base" body2="link2" />
+    <exclude body1="base" body2="link5" />
+    <exclude body1="camera_bracket" body2="camera_housing" />
+    <exclude body1="camera_bracket" body2="link6" />
+    <exclude body1="camera_housing" body2="link6" />
+    <exclude body1="link1" body2="link2" />
+    <exclude body1="link1" body2="link3" />
+    <exclude body1="link1" body2="link4" />
+    <exclude body1="link1" body2="link5" />
+    <exclude body1="link1" body2="link6" />
+    <exclude body1="link2" body2="link3" />
+    <exclude body1="link2" body2="link4" />
+    <exclude body1="link2" body2="link5" />
+    <exclude body1="link3" body2="link4" />
+    <exclude body1="link3" body2="link5" />
+    <exclude body1="link3" body2="link6" />
+    <exclude body1="link4" body2="link5" />
+    <exclude body1="link4" body2="link6" />
+    <exclude body1="link5" body2="link6" />
+  </contact>
+  <actuator>
+    <position name="servo_joint1_to_base" joint="joint1_to_base" kp="1000" kv="65" ctrlrange="-3.14 3.14159" />
+    <position name="servo_joint2_to_joint1" joint="joint2_to_joint1" kp="1000" kv="65" ctrlrange="-3.14159 3.14159" />
+    <position name="servo_joint3_to_joint2" joint="joint3_to_joint2" kp="1000" kv="65" ctrlrange="-2.61 2.618" />
+    <position name="servo_joint4_to_joint3" joint="joint4_to_joint3" kp="1000" kv="65" ctrlrange="-2.9670 2.9670" />
+    <position name="servo_joint5_to_joint4" joint="joint5_to_joint4" kp="1000" kv="65" ctrlrange="-2.93 2.9321" />
+    <position name="servo_joint6_to_joint5" joint="joint6_to_joint5" kp="1000" kv="65" ctrlrange="-3.03 3.0368" />
+  </actuator>
+</mujoco>

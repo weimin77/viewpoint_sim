@@ -1,0 +1,81 @@
+{
+  "repository": "https://github.com/elephantrobotics/mycobot_ros2",
+  "commit": "d42ff61a78122c79246623391540d75738b03b23",
+  "model": "myCobot Pro 630",
+  "files": [
+    {
+      "file": "mycobot_pro_630.urdf",
+      "source": "https://raw.githubusercontent.com/elephantrobotics/mycobot_ros2/d42ff61a78122c79246623391540d75738b03b23/mycobot_description/urdf/mycobot_pro_630/mycobot_pro_630.urdf",
+      "sha256": "6a21c04133fcd07bfb40b46e369d2c1ecb42e7906ff2640ad8e6573851d7ad23",
+      "bytes": 5057
+    },
+    {
+      "file": "base.dae",
+      "source": "https://raw.githubusercontent.com/elephantrobotics/mycobot_ros2/d42ff61a78122c79246623391540d75738b03b23/mycobot_description/urdf/mycobot_pro_630/base.dae",
+      "sha256": "69b91684cb8a319c9c10ba5601668d25779e12466958763ddf5b7b7e830569cd",
+      "bytes": 7610595
+    },
+    {
+      "file": "link1.dae",
+      "source": "https://raw.githubusercontent.com/elephantrobotics/mycobot_ros2/d42ff61a78122c79246623391540d75738b03b23/mycobot_description/urdf/mycobot_pro_630/link1.dae",
+      "sha256": "46453f2e482679342e6467dfa4865f324a388631553d8ab5e32bba5b3445cf48",
+      "bytes": 2581783
+    },
+    {
+      "file": "link2.dae",
+      "source": "https://raw.githubusercontent.com/elephantrobotics/mycobot_ros2/d42ff61a78122c79246623391540d75738b03b23/mycobot_description/urdf/mycobot_pro_630/link2.dae",
+      "sha256": "3508f47eeeea23e98ad54c20409d39ddd44dcb3375fae1962ee8b50e7b334d0f",
+      "bytes": 3941897
+    },
+    {
+      "file": "link3.dae",
+      "source": "https://raw.githubusercontent.com/elephantrobotics/mycobot_ros2/d42ff61a78122c79246623391540d75738b03b23/mycobot_description/urdf/mycobot_pro_630/link3.dae",
+      "sha256": "b12b969f95d4f8335ee6446bf9887a47922a2deaa77127dba1182a18160fdcb2",
+      "bytes": 11239650
+    },
+    {
+      "file": "link4.dae",
+      "source": "https://raw.githubusercontent.com/elephantrobotics/mycobot_ros2/d42ff61a78122c79246623391540d75738b03b23/mycobot_description/urdf/mycobot_pro_630/link4.dae",
+      "sha256": "c8f5e1b8a6d7e9f1a2d81bc213c2841fa92e2a4f64a8eb666280671b6bff21fd",
+      "bytes": 2768583
+    },
+    {
+      "file": "link5.dae",
+      "source": "https://raw.githubusercontent.com/elephantrobotics/mycobot_ros2/d42ff61a78122c79246623391540d75738b03b23/mycobot_description/urdf/mycobot_pro_630/link5.dae",
+      "sha256": "75da71bb3b5bd08be2bf4ebfec1758efa857b595d7db5fdab2a6d42f8e7dfb92",
+      "bytes": 3389032
+    },
+    {
+      "file": "link6.dae",
+      "source": "https://raw.githubusercontent.com/elephantrobotics/mycobot_ros2/d42ff61a78122c79246623391540d75738b03b23/mycobot_description/urdf/mycobot_pro_630/link6.dae",
+      "sha256": "f6f5521049ce6d9ab46e12f4b62aecfd9ab129171dc46d7a0811564519163429",
+      "bytes": 1109523
+    },
+    {
+      "file": "LICENSE",
+      "source": "https://raw.githubusercontent.com/elephantrobotics/mycobot_ros2/d42ff61a78122c79246623391540d75738b03b23/mycobot_description/LICENSE",
+      "bytes": 1326,
+      "sha256": "28b1e3b807970e394efdd464faf42af65c65765869d61e1023d99c9627d22ef1"
+    },
+    {
+      "file": "mycobot.srdf",
+      "source": "https://raw.githubusercontent.com/elephantrobotics/mycobot_ros2/d42ff61a78122c79246623391540d75738b03b23/mycobot_pro/mycobot_630_moveit2/config/firefighter.srdf",
+      "bytes": 3678,
+      "sha256": "ddeceb7a3e5ad51ff7e3a5a56324cbfece75f1af13436df99a70cf7123b61a10"
+    },
+    {
+      "file": "joint_limits_official.yaml",
+      "source": "https://raw.githubusercontent.com/elephantrobotics/mycobot_ros2/d42ff61a78122c79246623391540d75738b03b23/mycobot_pro/mycobot_630_moveit2/config/joint_limits.yaml",
+      "bytes": 1403,
+      "sha256": "19cdd5cd66bde74475d29d784de8e1986feb82d147d616b95ce2e99d18118c26"
+    },
+    {
+      "file": "package_official.xml",
+      "source": "https://raw.githubusercontent.com/elephantrobotics/mycobot_ros2/d42ff61a78122c79246623391540d75738b03b23/mycobot_description/package.xml",
+      "bytes": 613,
+      "sha256": "e3c6ca25578dbed95d361ba6801b13e8560ff5e34eb7be1fa7778ee42d1e0514"
+    }
+  ],
+  "conversion": "COLLADA scene transforms preserved; coordinates multiplied by 0.001 to meters; original URDF kinematics and limits unchanged.",
+  "dynamics": "Original lacks calibrated inertias and usable speeds; MJCF uses documented example masses, inertias, gains and gravity compensation."
+}

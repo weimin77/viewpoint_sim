@@ -1,9 +1,6 @@
 .venv/
 __pycache__/
 *.pyc
+build/
 *.egg-info/
 outputs/my_*/
-outputs/gui_run/
-outputs/run_*/
-build/
-dist/

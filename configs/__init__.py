@@ -1,1 +1,1 @@
-"""Example simulation configurations."""
+"""MuJoCo workcell examples."""

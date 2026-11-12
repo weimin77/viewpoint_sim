@@ -1,52 +1,66 @@
 {
-  "schema_version": 1,
-  "created_utc": "2026-11-11T08:10:15.555942+00:00",
+  "schema_version": 2,
+  "engine": "mujoco",
+  "robot_model": "myCobot Pro 630",
+  "created_utc": "2026-11-12T05:51:20.528857+00:00",
   "seed": 20261106,
   "complete": true,
-  "accepted_total": 8,
+  "accepted_total": 12,
   "heights": [
     {
-      "height_above_tray_m": 0.2,
-      "accepted": 8,
-      "target": 8,
-      "attempts": 15,
-      "rejections": {
-        "food_out_of_rgb_fov": 7
-      },
-      "z_perturbations_m": [
-        0.0040313591419249735,
-        0.007190262044886389,
-        -0.00550889294552399,
-        0.01340285708291047,
-        -0.0053652247257547185,
-        0.009717594404067293,
-        0.01596378918508241,
-        0.011264426949757992
-      ],
+      "height_above_tray_m": 0.3,
+      "accepted": 4,
+      "target": 4,
+      "attempts": 4,
+      "rejections": {},
       "complete": true,
-      "acceptance_rate": 0.5333333333333333
+      "acceptance_rate": 1.0
+    },
+    {
+      "height_above_tray_m": 0.36,
+      "accepted": 4,
+      "target": 4,
+      "attempts": 4,
+      "rejections": {},
+      "complete": true,
+      "acceptance_rate": 1.0
+    },
+    {
+      "height_above_tray_m": 0.42,
+      "accepted": 4,
+      "target": 4,
+      "attempts": 4,
+      "rejections": {},
+      "complete": true,
+      "acceptance_rate": 1.0
     }
   ],
-  "minimum_axis_angle_deg": 6.399059303362534,
-  "z_perturbation_m": 0.02,
-  "elapsed_seconds": 6.002626829998917,
+  "minimum_axis_angle_deg": 5.82080850807777,
+  "elapsed_seconds": 12.157457945000033,
   "simulation_limits": [
-    "Kinematic motion; no dynamics/controller settling",
+    "Example inertias/servo gains, not calibrated hardware dynamics",
     "Ideal aligned undistorted RGB-D; no stereo matching/noise/material physics",
     "Discrete collision checking; not continuous swept-volume certification",
     "Example workcell and camera extrinsics; replace with measured values"
   ],
   "view_ids_ranked_by_tray_ratio": {
-    "0.2": [
-      "h00_c0009",
-      "h00_c0015",
+    "0.3": [
       "h00_c0003",
-      "h00_c0012",
+      "h00_c0002",
       "h00_c0001",
-      "h00_c0004",
-      "h00_c0014",
-      "h00_c0002"
+      "h00_c0004"
+    ],
+    "0.36": [
+      "h01_c0003",
+      "h01_c0002",
+      "h01_c0001",
+      "h01_c0004"
+    ],
+    "0.42": [
+      "h02_c0002",
+      "h02_c0003",
+      "h02_c0004",
+      "h02_c0001"
     ]
-  },
-  "rgb_folder": "rgb"
+  }
 }

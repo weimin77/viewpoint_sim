@@ -1,145 +1,86 @@
-import argparse
-import json
+import argparse,json,os,sys,time
 from pathlib import Path
-import sys
-import time
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image,ImageDraw
 from .config import load_config
 
 
-def replay(result, gui=True, gif=None):
-    from contextlib import ExitStack
+def replay(result,gui=True,gif=None,physics=False):
     from .world import World
-    from .motion import interpolate, path_free
-    result = Path(result)
-    cfg = load_config(result/"config.json")
-    views = json.loads((result/"views.json").read_text(encoding="utf-8"))
-    if not views:
-        raise ValueError("There are no accepted views to replay")
-    motion = cfg["motion"]
-    # Playback is a constant joint-space speed, independent of the recorded path
-    # sampling, so every edge takes time proportional to the distance it covers.
-    speed = float(motion.get("replay_speed_rad_per_s", 1.2))
-    pause = float(motion.get("replay_pause_seconds", .5))
-    resolution = float(motion.get("edge_resolution_rad", .025))
-    if speed <= 0 or resolution <= 0 or pause < 0:
-        raise ValueError("Invalid replay timing settings")
-
-    frames, durations, interval = [], [], .05
-    with ExitStack() as stack:
-        # Revalidation needs joint states, and driving the visible robot through a
-        # whole trajectory first would teleport it before the animation starts.
-        shadow = stack.enter_context(World(cfg, gui=False))
+    from .motion import interpolate,path_free
+    root=Path(result);cfg=load_config(root/'config.json')
+    views=json.loads((root/'views.json').read_text(encoding='utf-8'))
+    if not views:raise ValueError('No accepted views to replay')
+    frames=[]
+    with World(cfg,gui=gui) as world:
         for view in views:
-            if not path_free(shadow, np.asarray(view["path_q_rad"], float)):
-                raise RuntimeError("Saved replay path failed collision revalidation")
-        world = shadow if not gui else stack.enter_context(World(cfg, gui=True))
-        world.set_q(np.array(cfg["robot"]["home_q_rad"], float))
-        clock, next_frame, started = 0., 0., time.monotonic()
-
-        def frame(view, captured=False, duration=None):
-            canvas=Image.new("RGB",(1000,440),"#101b28")
-            scene=Image.fromarray(world.overview()).resize((660,440))
-            rgb=Image.fromarray(world.render(world.camera_pose())[0]).resize((320,180))
-            canvas.paste(scene,(0,0));canvas.paste(rgb,(670,125))
-            draw=ImageDraw.Draw(canvas)
-            draw.text((680,30),"MYCOBOT 630 PRO / VIEWPOINT SIM",fill="#72dfbe")
-            draw.text((680,62),f"Target height: {view['height_above_tray_m']*1000:.0f} mm",fill="white")
-            draw.text((680,86),view["id"],fill="white")
-            draw.text((680,340),"KINEMATIC / IDEAL RGB-D",fill="#a0b3c5")
-            if captured:
-                draw.text((680,286),"CAPTURED",fill="#71dfbf")
-            frames.append(canvas)
-            durations.append(int(round(duration if duration else interval*1000)))
-
-        def wait():
-            if gui or gif:
-                delay = clock - (time.monotonic()-started)
-                if delay > 0:
-                    time.sleep(delay)
-
-        def advance(q, view):
-            """Pose the robot at q and keep playback on the shared simulated clock."""
-            nonlocal next_frame
-            world.set_q(q)
-            if gif:
-                # Fixed-rate sampling keeps GIF speed independent of step count.
-                while next_frame <= clock + 1e-9:
-                    frame(view)
-                    next_frame += interval
-            wait()
-
-        def hold(view):
-            """Stop at the capture pose; one long frame keeps the pause visible."""
-            nonlocal clock, next_frame
-            world.set_q(np.asarray(view["path_q_rad"], float)[-1])
-            if pause <= 0:
-                return
-            clock += pause
-            if gif:
-                frame(view, captured=True, duration=pause*1000)
-                next_frame = clock + interval
-            wait()
-
-        for view in views:
-            path = np.asarray(view["path_q_rad"], float)
-            for a, b in zip(path, path[1:]):
-                points = interpolate(a, b, resolution)
-                per_step = float(np.max(np.abs(b-a))) / max(1, len(points)-1)
-                for q in points[1:]:
-                    clock += per_step/speed
-                    advance(q, view)
-            world.draw_view(np.array(view["T_BC_actual"]))
-            hold(view)
-        if gif and frames:
-            frames[0].save(gif,save_all=True,append_images=frames[1:],
-                           duration=durations,loop=0,optimize=True)
+            path=view['path_q_rad']
+            if not path_free(world,path):raise RuntimeError('Replay path failed collision revalidation')
+            world.set_q(path[0])
+            if physics:
+                world.execute(path)
+            else:
+                for a,b in zip(path,path[1:]):
+                    for q in interpolate(np.array(a),np.array(b),.16):
+                        world.set_q(q)
+                        if gui:world.viewer.sync();time.sleep(.04)
+                        if gif:
+                            scene=Image.fromarray(world.overview()).resize((660,440))
+                            rgb=Image.fromarray(world.render(world.camera_pose())[0]).resize((320,180))
+                            canvas=Image.new('RGB',(1000,440),'#0e1825');canvas.paste(scene,(0,0));canvas.paste(rgb,(670,125))
+                            d=ImageDraw.Draw(canvas);d.text((680,24),'MUJOCO / myCobot Pro 630',fill='#72dfbe')
+                            d.text((680,60),f"Height: {view['height_above_tray_m']*1000:.0f} mm",fill='white')
+                            d.text((680,86),view['id'],fill='white');d.text((680,340),'KINEMATIC PATH PREVIEW',fill='#a0b3c5')
+                            frames.append(canvas)
+            if gif and frames:frames.extend([frames[-1].copy()]*2)
+        if gif and frames:frames[0].save(gif,save_all=True,append_images=frames[1:],duration=120,loop=0,optimize=True)
         if gui:
-            print("Replay complete. Close the PyBullet window or press Ctrl+C to finish.")
-            import pybullet as p
+            print('Replay finished. Close the MuJoCo window or press Ctrl+C.')
             try:
-                while p.isConnected(world.cid):
-                    time.sleep(.1)
-            except KeyboardInterrupt:
-                pass
+                while world.viewer.is_running():world.viewer.sync();time.sleep(.03)
+            except KeyboardInterrupt:pass
 
 
 def main(argv=None):
-    parser=argparse.ArgumentParser(description="myCobot 280 constrained random viewpoint simulation")
-    sub=parser.add_subparsers(dest="command",required=True)
-    run=sub.add_parser("run",help="Sample, validate, execute kinematically, and export RGB-D")
-    run.add_argument("--config",default=None)
-    run.add_argument("--output",default="outputs/demo")
-    run.add_argument("--gui",action="store_true",help="Open PyBullet 3D window")
-    run.add_argument("--headless",action="store_true",help="Explicit CPU-only DIRECT mode (default)")
-    rep=sub.add_parser("replay",help="Replay saved validated trajectories")
-    rep.add_argument("--result",default="outputs/demo")
-    rep.add_argument("--headless",action="store_true")
-    rep.add_argument("--gif",help="Also save a third-person/camera preview GIF")
-    check=sub.add_parser("check",help="Validate configuration and initial collisions")
-    check.add_argument("--config",default=None)
-    args=parser.parse_args(argv)
+    p=argparse.ArgumentParser(description='MuJoCo + myCobot Pro 630 constrained viewpoint simulation')
+    sub=p.add_subparsers(dest='command',required=True)
+    run=sub.add_parser('run',help='Generate and capture new views')
+    run.add_argument('--config');run.add_argument('--output',default='outputs/my_run')
+    mode=run.add_mutually_exclusive_group();mode.add_argument('--gui',action='store_true');mode.add_argument('--headless',action='store_true')
+    rep=sub.add_parser('replay',help='Replay saved joint paths')
+    rep.add_argument('--result',default='outputs/demo');rep.add_argument('--headless',action='store_true')
+    rep.add_argument('--gif');rep.add_argument('--physics',action='store_true',help='Execute with MuJoCo position servos')
+    check=sub.add_parser('check',help='Validate model, calibration settings, and initial collision')
+    check.add_argument('--config')
+    export=sub.add_parser('export-model',help='Export standalone MJCF for the MuJoCo viewer')
+    export.add_argument('--config');export.add_argument('--output',default='models/default_scene.xml')
+    view=sub.add_parser('view',help='Open interactive MuJoCo model with actuator controls')
+    view.add_argument('--config')
+    a=p.parse_args(argv)
     try:
-        if args.command=="replay":
-            replay(args.result,not args.headless,args.gif)
-            return 0
+        if a.command=='replay':replay(a.result,not a.headless,a.gif,a.physics);return 0
         from .world import World
-        cfg=load_config(args.config)
-        with World(cfg,gui=getattr(args,"gui",False) and not getattr(args,"headless",False)) as world:
-            if args.command=="check":
-                reason=world.collision(np.array(cfg["robot"]["home_q_rad"]))
-                print(json.dumps({"configuration_valid":True,"home_collision":reason,"joint_names":world.kin.names},indent=2))
+        cfg=load_config(getattr(a,'config',None))
+        with World(cfg,gui=getattr(a,'gui',False) or a.command=='view') as world:
+            if a.command=='check':
+                reason=world.collision(world.q)
+                print(json.dumps(dict(engine='mujoco',robot=cfg['robot']['model'],home_collision=reason,
+                                      joints=world.kin.names,crop_mode=cfg['postprocess']['crop_mode'],z_jitter_m=cfg['sampling']['z_jitter_m']),indent=2))
                 return 2 if reason else 0
-            from .planner import run as simulate
-            summary=simulate(world,args.output)
-            print(json.dumps(summary,indent=2,ensure_ascii=False))
-            print(f"Open {Path(args.output).resolve()/'report.html'} to inspect results.")
-            return 0 if summary["complete"] else 2
-    except (ValueError,FileExistsError,RuntimeError) as e:
-        print(f"Error: {e}",file=sys.stderr)
-        return 1
+            if a.command=='export-model':world.export_scene(a.output);print(Path(a.output).resolve());return 0
+            if a.command=='view':
+                import mujoco
+                while world.viewer.is_running():
+                    tic=time.monotonic();mujoco.mj_step(world.model,world.data);world.viewer.sync()
+                    time.sleep(max(0,world.model.opt.timestep-(time.monotonic()-tic)))
+                return 0
+            from .planner import run
+            summary=run(world,a.output);print(json.dumps(summary,indent=2,ensure_ascii=False))
+            print('Open',Path(a.output).resolve()/'report.html')
+            return 0 if summary['complete'] else 2
+    except KeyboardInterrupt:return 130
+    except (ValueError,FileExistsError,RuntimeError) as error:
+        print('Error:',error,file=sys.stderr);return 1
 
 
-if __name__=="__main__":
-    sys.exit(main())
+if __name__=='__main__':raise SystemExit(main())

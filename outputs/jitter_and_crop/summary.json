@@ -1,0 +1,36 @@
+{
+  "schema_version": 2,
+  "engine": "mujoco",
+  "robot_model": "myCobot Pro 630",
+  "created_utc": "2026-11-12T05:51:25.173741+00:00",
+  "seed": 20261112,
+  "complete": true,
+  "accepted_total": 2,
+  "heights": [
+    {
+      "height_above_tray_m": 0.33,
+      "accepted": 2,
+      "target": 2,
+      "attempts": 3,
+      "rejections": {
+        "ik_or_singularity": 1
+      },
+      "complete": true,
+      "acceptance_rate": 0.6666666666666666
+    }
+  ],
+  "minimum_axis_angle_deg": 18.606060205548403,
+  "elapsed_seconds": 3.40284160300007,
+  "simulation_limits": [
+    "Example inertias/servo gains, not calibrated hardware dynamics",
+    "Ideal aligned undistorted RGB-D; no stereo matching/noise/material physics",
+    "Discrete collision checking; not continuous swept-volume certification",
+    "Example workcell and camera extrinsics; replace with measured values"
+  ],
+  "view_ids_ranked_by_tray_ratio": {
+    "0.33": [
+      "h00_c0003",
+      "h00_c0001"
+    ]
+  }
+}

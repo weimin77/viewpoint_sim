@@ -77,5 +77,16 @@
     }
   ],
   "conversion": "COLLADA scene transforms preserved; coordinates multiplied by 0.001 to meters; original URDF kinematics and limits unchanged.",
-  "dynamics": "Original lacks calibrated inertias and usable speeds; MJCF uses documented example masses, inertias, gains and gravity compensation."
+  "dynamics": "Original lacks calibrated inertias and usable speeds; MJCF uses documented example masses, inertias, gains and gravity compensation.",
+  "local_edits": [
+    {
+      "file": "mycobot_pro_630.urdf",
+      "edit": "XML declaration changed from '<?xml version=\"1.0.2\"?>' to '<?xml version=\"1.0\"?>'",
+      "reason": "Upstream declares an invalid XML version, which every strict parser rejects (xml.etree raises ParseError: XML declaration not well-formed). Only the declaration changed; the robot body is byte-identical.",
+      "upstream_sha256": "6a21c04133fcd07bfb40b46e369d2c1ecb42e7906ff2640ad8e6573851d7ad23",
+      "patched_sha256": "e7d2c958900aa691a4003ffdecfd9bdeeba4064ee6e36acd69892ea23f1d4fc4",
+      "verbatim_copy": "original.urdf",
+      "original_sha256": "6a21c04133fcd07bfb40b46e369d2c1ecb42e7906ff2640ad8e6573851d7ad23"
+    }
+  ]
 }

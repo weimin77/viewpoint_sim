@@ -1,4 +1,5 @@
 import copy,json,tempfile,unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 import numpy as np
 from PIL import Image
@@ -23,6 +24,18 @@ class GeometryAndConfigTests(unittest.TestCase):
         np.testing.assert_allclose(T[:3,:3].T@T[:3,:3],np.eye(3),atol=1e-12)
         np.testing.assert_allclose((T@inv(m))@m,T,atol=1e-12)
         self.assertAlmostEqual(np.linalg.det(T[:3,:3]),1)
+
+    def test_bundled_urdf_and_srdf_are_parseable(self):
+        # Upstream Pro 630 declares <?xml version="1.0.2"?>, which strict parsers
+        # reject; the bundled copy is patched (assets/.../original.urdf keeps the
+        # verbatim upstream file). This guards against re-vendoring the raw file.
+        c=load_config()
+        for key in ('urdf','srdf'):
+            self.assertIsNotNone(ET.parse(ROOT/c['robot'][key]).getroot())
+        urdf=ET.parse(ROOT/c['robot']['urdf']).getroot()
+        self.assertEqual(len(urdf.findall('link')),7)          # base + link1..link6
+        self.assertEqual(len(urdf.findall('joint')),6)         # all revolute
+        self.assertTrue(all(j.get('type')=='revolute' for j in urdf.findall('joint')))
 
     def test_unit_conversion_matches_robot_scale(self):
         info=json.loads((ROOT/'assets/mycobot_pro_630/mesh_conversion.json').read_text())

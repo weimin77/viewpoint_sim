@@ -22,22 +22,27 @@ def stats_template(mode):
     return {'mode': mode, 'physics_steps': 0, 'max_joint_speed_rad_s': 0.0}
 
 
-def kinematic(path, motion, *, set_q, collide, on_frame=None):
+def kinematic(path, motion, *, set_q, collide, on_frame=None, sync_every=1):
     """Step through interpolated joint states, aborting on any collision.
 
-    ``on_frame`` is called once per interpolated state so a caller can draw, and
-    it is the only place wall-clock pacing belongs - this module never sleeps.
+    ``on_frame`` is called every ``sync_every``-th interpolated state so a caller
+    can draw, and it is the only place wall-clock pacing belongs - this module
+    never sleeps. Skipped frames still run ``set_q`` and ``collide``: only the
+    drawing is strided, never the validation.
     """
     stats = stats_template(motion['execution_mode'])
     resolution = motion['edge_resolution_rad']
+    every = max(1, int(sync_every))
+    frame = 0
     for start, end in zip(path, path[1:]):
         for q in interpolate(np.array(start), np.array(end), resolution):
             set_q(q)
             reason = collide()
             if reason:
                 raise RuntimeError('Execution aborted: ' + reason)
-            if on_frame is not None:
+            if on_frame is not None and frame % every == 0:
                 on_frame()
+            frame += 1
     set_q(path[-1])
     return stats
 
@@ -54,7 +59,7 @@ class Servo:
     SYNC_EVERY = 12
 
     def __init__(self, model, data, dof_addresses, motion, *,
-                 current_q, collide, on_frame=None):
+                 current_q, collide, on_frame=None, sync_every=SYNC_EVERY):
         self.model = model
         self.data = data
         self.dof_addresses = dof_addresses
@@ -62,6 +67,7 @@ class Servo:
         self.current_q = current_q
         self.collide = collide
         self.on_frame = on_frame
+        self.sync_every = max(1, int(sync_every))
         self.stats = stats_template(motion['execution_mode'])
 
     def _joint_speed(self):
@@ -79,7 +85,7 @@ class Servo:
         if reason:
             raise RuntimeError('Physics execution aborted: ' + reason)
         if (self.on_frame is not None
-                and self.stats['physics_steps'] % self.SYNC_EVERY == 0):
+                and self.stats['physics_steps'] % self.sync_every == 0):
             self.on_frame()
 
     def follow(self, path):
@@ -125,10 +131,11 @@ class Servo:
 
 
 def execute(model, data, motion, path, *, set_q, current_q, dof_addresses,
-            collide, on_frame=None):
+            collide, on_frame=None, sync_every=12):
     """Run ``path`` with the configured execution mode."""
     if motion['execution_mode'] == 'kinematic':
         return kinematic(path, motion, set_q=set_q, collide=collide,
-                         on_frame=on_frame)
+                         on_frame=on_frame, sync_every=sync_every)
     return Servo(model, data, dof_addresses, motion, current_q=current_q,
-                 collide=collide, on_frame=on_frame).follow(path)
+                 collide=collide, on_frame=on_frame,
+                 sync_every=sync_every).follow(path)

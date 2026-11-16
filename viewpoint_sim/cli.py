@@ -5,14 +5,18 @@ from PIL import Image,ImageDraw
 from .config import load_config
 
 
-def replay(result,gui=True,gif=None,physics=False):
+def replay(result,gui=True,gif=None,physics=False,speed=1.0):
     from .world import World
     from .motion import interpolate,path_free
     root=Path(result);cfg=load_config(root/'config.json')
     views=json.loads((root/'views.json').read_text(encoding='utf-8'))
     if not views:raise ValueError('No accepted views to replay')
     frames=[]
-    with World(cfg,gui=gui) as world:
+    # A GIF needs every frame; a live window only needs a steady frame rate, so
+    # the preview walks every `stride`-th interpolated point instead of drawing
+    # all of them slowly. Physics replays pace themselves inside World.execute.
+    stride=1 if gif else max(1,int(round(speed)))
+    with World(cfg,gui=gui,speed=speed) as world:
         for view in views:
             path=view['path_q_rad']
             if not path_free(world,path):raise RuntimeError('Replay path failed collision revalidation')
@@ -20,10 +24,11 @@ def replay(result,gui=True,gif=None,physics=False):
             if physics:
                 world.execute(path)
             else:
+                frame=0
                 for a,b in zip(path,path[1:]):
                     for q in interpolate(np.array(a),np.array(b),.16):
                         world.set_q(q)
-                        if gui:world.viewer.sync();time.sleep(.04)
+                        if gui and frame%stride==0:world.viewer.sync();time.sleep(.04)
                         if gif:
                             scene=Image.fromarray(world.overview()).resize((660,440))
                             rgb=Image.fromarray(world.render(world.camera_pose())[0]).resize((320,180))
@@ -32,6 +37,7 @@ def replay(result,gui=True,gif=None,physics=False):
                             d.text((680,60),f"Height: {view['height_above_tray_m']*1000:.0f} mm",fill='white')
                             d.text((680,86),view['id'],fill='white');d.text((680,340),'KINEMATIC PATH PREVIEW',fill='#a0b3c5')
                             frames.append(canvas)
+                        frame+=1
             if gif and frames:frames.extend([frames[-1].copy()]*2)
         if gif and frames:frames[0].save(gif,save_all=True,append_images=frames[1:],duration=120,loop=0,optimize=True)
         if gui:
@@ -47,9 +53,11 @@ def main(argv=None):
     run=sub.add_parser('run',help='Generate and capture new views')
     run.add_argument('--config');run.add_argument('--output',default='outputs/my_run')
     mode=run.add_mutually_exclusive_group();mode.add_argument('--gui',action='store_true');mode.add_argument('--headless',action='store_true')
+    run.add_argument('--speed',type=float,default=4.0,help='GUI playback speed multiplier; 1.0 = realtime. Never affects recorded data')
     rep=sub.add_parser('replay',help='Replay saved joint paths')
     rep.add_argument('--result',default='outputs/demo');rep.add_argument('--headless',action='store_true')
     rep.add_argument('--gif');rep.add_argument('--physics',action='store_true',help='Execute with MuJoCo position servos')
+    rep.add_argument('--speed',type=float,default=4.0,help='GUI playback speed multiplier; 1.0 = realtime. Never affects recorded data')
     check=sub.add_parser('check',help='Validate model, calibration settings, and initial collision')
     check.add_argument('--config')
     export=sub.add_parser('export-model',help='Export standalone MJCF for the MuJoCo viewer')
@@ -58,10 +66,11 @@ def main(argv=None):
     view.add_argument('--config')
     a=p.parse_args(argv)
     try:
-        if a.command=='replay':replay(a.result,not a.headless,a.gif,a.physics);return 0
+        if a.command=='replay':replay(a.result,not a.headless,a.gif,a.physics,a.speed);return 0
         from .world import World
         cfg=load_config(getattr(a,'config',None))
-        with World(cfg,gui=getattr(a,'gui',False) or a.command=='view') as world:
+        with World(cfg,gui=getattr(a,'gui',False) or a.command=='view',
+                   speed=getattr(a,'speed',4.0)) as world:
             if a.command=='check':
                 reason=world.collision(world.q)
                 print(json.dumps(dict(engine='mujoco',robot=cfg['robot']['model'],home_collision=reason,

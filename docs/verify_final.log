@@ -1,7 +1,5 @@
-# generated 2026-11-16T07:04:54Z
-## outputs/demo (position_control, 12 views)
+# generated 2026-11-16T07:37:50Z
+## outputs/demo
 PASS: 12 MuJoCo captures verified; joint paths, optical poses, image alignment, jitter and crop mode.
-## outputs/jitter_and_crop (position_control, 2 views)
+## outputs/jitter_and_crop
 PASS: 2 MuJoCo captures verified; joint paths, optical poses, image alignment, jitter and crop mode.
-## kinematic A/B (/tmp/kin_new)
-PASS: 12 MuJoCo captures verified; joint paths, optical poses, image alignment, jitter and crop mode.

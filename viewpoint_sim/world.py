@@ -18,8 +18,11 @@ from . import collision, execution
 
 
 class World:
-    def __init__(self,cfg,gui=False):
+    def __init__(self,cfg,gui=False,speed=1.0):
         self.cfg,self.gui=cfg,gui
+        # Playback pacing multiplier. It only divides wall-clock sleeps; no
+        # recorded number (steps, poses, timings) depends on it.
+        self.speed=max(0.05,float(speed))
         self.mount=mount_transform(cfg)
         self.kin=Kinematics(ROOT/cfg['robot']['urdf'],cfg['robot']['flange_link'],cfg['robot']['base_position_B_m'])
         self.xml=build_model_xml(cfg)
@@ -146,15 +149,23 @@ class World:
 
     def execute(self,path):
         motion=self.cfg['motion'];kinematic=motion['execution_mode']=='kinematic'
-        settle_frame=self.model.opt.timestep*12
+        dt=self.model.opt.timestep
+        # Playback pacing lives here, not in the loop: only a live viewer needs
+        # wall time. The frame delay stays ~24 ms in physics mode (about 41 fps)
+        # and the frame STRIDE grows with `speed`, so the clip gets shorter
+        # instead of choppier, and `speed` never reaches the physics.
+        if kinematic:
+            frame_delay,stride=.015,self.speed
+        else:
+            frame_delay,stride=dt*12,12*self.speed
         on_frame=None
         if self.viewer is not None:
-            # Pacing lives here, not in the loop: only a live viewer needs wall time.
             def on_frame():
-                self.viewer.sync();time.sleep(.015 if kinematic else settle_frame)
+                self.viewer.sync();time.sleep(frame_delay)
         return execution.execute(self.model,self.data,motion,path,set_q=self.set_q,
                                  current_q=lambda:self.q,dof_addresses=self.dadr,
-                                 collide=self.collision_current,on_frame=on_frame)
+                                 collide=self.collision_current,on_frame=on_frame,
+                                 sync_every=max(1,int(round(stride))))
 
     def export_scene(self,path):
         path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)

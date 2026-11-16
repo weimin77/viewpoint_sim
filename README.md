@@ -61,6 +61,15 @@ bash scripts/setup.sh
 
 无显示器或系统缺少 Tk 时，控件窗口自动跳过并在 stderr 说明，回放按 `--speed` 继续。想强制关掉它用 `--no-controls`。
 
+控件文字默认中文，但会先探测当前环境能否渲染中文字形：**不能就自动改用英文**，标题一起换。之所以必须探测，是因为两件事都可能发生——系统没装 CJK 字体，或者 Tk 只连到核心 X11 字体（`::tk::pkgconfig get fontsystem` 返回 `x11`，此时 Tk 完全读不到 TTF，装字体也无效）。这种情况下中文会显示成空方块。
+
+强制指定语言：
+
+```bash
+VIEWPOINT_LANG=zh .venv/bin/python -m viewpoint_sim replay --result outputs/demo
+VIEWPOINT_LANG=en .venv/bin/python -m viewpoint_sim replay --result outputs/demo
+```
+
 安装脚本默认创建 Python 3.12 环境，并使用清华 PyPI 镜像与 120 秒读取超时。可以自行指定其他源：
 
 ```bash

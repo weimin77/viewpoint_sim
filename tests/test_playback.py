@@ -1,6 +1,9 @@
 """Playback state tests: the part of the replay controls that needs no window."""
+import os
 import unittest
+from unittest import mock
 
+from viewpoint_sim import playback
 from viewpoint_sim.playback import MAX_SPEED, MIN_SPEED, Playback
 
 
@@ -51,5 +54,36 @@ class PlaybackTests(unittest.TestCase):
         self.assertFalse(state.paused)
 
 
-if __name__ == '__main__':
-    unittest.main()
+class LabelTests(unittest.TestCase):
+    """The panel must not show tofu on a machine without CJK fonts."""
+
+    def _with_lang(self, value):
+        env = {k: v for k, v in os.environ.items() if k != 'VIEWPOINT_LANG'}
+        if value is not None:
+            env['VIEWPOINT_LANG'] = value
+        return mock.patch.dict(os.environ, env, clear=True)
+
+    def test_lang_env_forces_each_language(self):
+        with self._with_lang('zh'):
+            self.assertTrue(playback.using_chinese(None))
+        with self._with_lang('en'):
+            self.assertFalse(playback.using_chinese(None))
+
+    def test_detection_without_override_asks_the_font(self):
+        fake = mock.Mock()
+        fake.measure.return_value = 0                  # no glyphs -> tofu
+        with self._with_lang(None), \
+                mock.patch('tkinter.font.nametofont', return_value=fake):
+            self.assertFalse(playback.using_chinese(None))
+        fake.measure.return_value = 24                 # glyphs present
+        with self._with_lang(None), \
+                mock.patch('tkinter.font.nametofont', return_value=fake):
+            self.assertTrue(playback.using_chinese(None))
+
+    def test_ascii_labels_contain_no_cjk(self):
+        for value in playback.TEXT_EN.values():
+            self.assertFalse([c for c in value if '\u4e00' <= c <= '\u9fff'],
+                             f'{value!r} contains CJK')
+
+    def test_both_label_sets_define_the_same_keys(self):
+        self.assertEqual(set(playback.TEXT_EN), set(playback.TEXT_ZH))

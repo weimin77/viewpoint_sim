@@ -12,8 +12,11 @@ pumped with ``root.update()`` from the replay loop instead of running
 state, and the frame delay the loop already pays doubles as the UI refresh.
 
 Everything degrades quietly. If Tk is missing or there is no display, ``Controls``
-reports ``ok == False`` and replay falls back to ``--speed``.
+reports ``ok == False`` and replay falls back to ``--speed``. If the environment
+cannot draw CJK glyphs, the panel switches to ASCII labels instead of showing
+tofu; see ``using_chinese``.
 """
+import os
 import time
 
 FRAME_DT = 0.025          # ~40 fps, the preview's wall-clock frame budget
@@ -25,6 +28,48 @@ PANEL = '#1c2430'
 TEXT = '#dfe7ef'
 MUTED = '#8fa3b8'
 ACCENT = '#72dfbe'
+
+# The panel ships two label sets and picks one at runtime. A CJK label on a
+# machine without CJK fonts renders as tofu, and Tk cannot fix that: with
+# `::tk::pkgconfig get fontsystem` == x11 it only reaches server-side bitmap
+# fonts, and a bare container often has no CJK font installed at all. Probing is
+# one `measure()` call - an unrenderable string measures 0.
+TEXT_ZH = {
+    'title': '回放控制', 'speed': '速度', 'replay': '重放 (R)',
+    'pause': '暂停 (空格)', 'resume': '继续 (空格)', 'quit': '退出 (Esc)',
+    'hint': '拖动滑块即时生效，只改播放速度，不改数据',
+    'ready': '准备中', 'done': '回放结束 — 共 {n} 个视点',
+    'realtime': '1× 实时',
+}
+TEXT_EN = {
+    'title': 'Replay controls', 'speed': 'Speed', 'replay': 'Replay (R)',
+    'pause': 'Pause (Space)', 'resume': 'Resume (Space)', 'quit': 'Quit (Esc)',
+    'hint': 'Live playback speed only - recorded data never changes',
+    'ready': 'Ready', 'done': 'Finished - {n} views',
+    'realtime': '1x realtime',
+}
+
+
+def using_chinese(root):
+    """True when the environment can actually draw CJK glyphs.
+
+    Zero width means no glyph, which is exactly the tofu case; a real font
+    measures a few multiples of its size. Called once per window, so the cost of
+    building a probe font does not matter.
+
+    ``VIEWPOINT_LANG`` overrides the probe: ``zh`` forces Chinese (useful once a
+    CJK font is installed), ``en`` forces the ASCII labels.
+    """
+    forced = os.environ.get('VIEWPOINT_LANG', '').strip().lower()
+    if forced in ('zh', 'zh_cn', 'zh-cn', 'cn'):
+        return True
+    if forced in ('en', 'en_us', 'en-us'):
+        return False
+    import tkinter.font as tkfont
+    try:
+        return tkfont.nametofont('TkDefaultFont').measure('回放') > 0
+    except Exception:
+        return False
 
 
 class Abort(Exception):
@@ -96,10 +141,11 @@ class Controls:
     why, so the caller can print it instead of failing silently.
     """
 
-    def __init__(self, state, title='回放控制'):
+    def __init__(self, state, title=None):
         self.state = state
         self.root = None
         self.error = None
+        self.text = TEXT_EN
         self._labels = {}
         try:
             import tkinter as tk
@@ -111,8 +157,9 @@ class Controls:
         except Exception as error:                      # pragma: no cover
             self.error = str(error)
             return
+        self.text = TEXT_ZH if using_chinese(root) else TEXT_EN
         try:
-            self._build(tk, root, title)
+            self._build(tk, root, title or self.text['title'])
         except Exception as error:                      # pragma: no cover
             self.error = str(error)
             try:
@@ -134,16 +181,16 @@ class Controls:
         wrap = tk.Frame(root, bg=BACKDROP, padx=16, pady=14)
         wrap.pack(fill='both', expand=True)
 
-        tk.Label(wrap, text='回放控制', bg=BACKDROP, fg=ACCENT,
+        tk.Label(wrap, text=self.text['title'], bg=BACKDROP, fg=ACCENT,
                  font=('TkDefaultFont', 11, 'bold')).pack(anchor='w')
 
-        self._labels['view'] = tk.Label(wrap, text='准备中', bg=BACKDROP, fg=TEXT,
-                                        font=('TkDefaultFont', 10))
+        self._labels['view'] = tk.Label(wrap, text=self.text['ready'], bg=BACKDROP,
+                                        fg=TEXT, font=('TkDefaultFont', 10))
         self._labels['view'].pack(anchor='w', pady=(10, 2))
 
         row = tk.Frame(wrap, bg=BACKDROP)
         row.pack(fill='x', pady=(10, 0))
-        tk.Label(row, text='速度', bg=BACKDROP, fg=MUTED).pack(side='left')
+        tk.Label(row, text=self.text['speed'], bg=BACKDROP, fg=MUTED).pack(side='left')
         self._labels['speed'] = tk.Label(row, text='', bg=BACKDROP, fg=ACCENT,
                                          font=('TkDefaultFont', 10, 'bold'))
         self._labels['speed'].pack(side='right')
@@ -160,19 +207,19 @@ class Controls:
         hint.pack(fill='x')
         tk.Label(hint, text=f'{MIN_SPEED}×', bg=BACKDROP, fg=MUTED,
                  font=('TkDefaultFont', 8)).pack(side='left')
-        tk.Label(hint, text='1× 实时', bg=BACKDROP, fg=MUTED,
+        tk.Label(hint, text=self.text['realtime'], bg=BACKDROP, fg=MUTED,
                  font=('TkDefaultFont', 8)).pack(side='left', padx=(26, 0))
         tk.Label(hint, text=f'{MAX_SPEED}×', bg=BACKDROP, fg=MUTED,
                  font=('TkDefaultFont', 8)).pack(side='right')
 
         buttons = tk.Frame(wrap, bg=BACKDROP)
         buttons.pack(fill='x', pady=(14, 0))
-        self._button(tk, buttons, '重放 (R)', self._reset).pack(side='left')
-        self._pause_button = self._button(tk, buttons, '暂停 (空格)', self._toggle)
+        self._button(tk, buttons, self.text['replay'], self._reset).pack(side='left')
+        self._pause_button = self._button(tk, buttons, self.text['pause'], self._toggle)
         self._pause_button.pack(side='left', padx=6)
-        self._button(tk, buttons, '退出 (Esc)', self._quit).pack(side='left')
+        self._button(tk, buttons, self.text['quit'], self._quit).pack(side='left')
 
-        tk.Label(wrap, text='拖动滑块即时生效，只改播放速度，不改数据',
+        tk.Label(wrap, text=self.text['hint'],
                  bg=BACKDROP, fg=MUTED, font=('TkDefaultFont', 8)
                  ).pack(anchor='w', pady=(12, 0))
 
@@ -238,17 +285,18 @@ class Controls:
         if self.root is None:
             return
         speed = self.state.get_speed()
-        self._labels['speed'].configure(text=f'{speed:.2f}×')
+        self._labels['speed'].configure(text=f'{speed:.2f}x')
         if self.state.finished:
-            view = f'回放结束 — 共 {self.state.total} 个视点'
+            view = self.text['done'].format(n=self.state.total)
         elif self.state.view:
             view = (f'{self.state.view}   '
                     f'{self.state.index} / {self.state.total}')
         else:
-            view = '准备中'
+            view = self.text['ready']
         self._labels['view'].configure(text=view)
-        self._pause_button.configure(text='继续 (空格)' if self.state.paused
-                                     else '暂停 (空格)')
+        self._pause_button.configure(text=self.text['resume']
+                                     if self.state.paused
+                                     else self.text['pause'])
 
     def close(self):
         if self.root is None:

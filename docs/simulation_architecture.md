@@ -616,6 +616,8 @@ raise RuntimeError('Position servo did not reach the configured settling criteri
 
 `Playback.pump()` 在没有 UI 时是空操作，`Controls` 创建失败时 `ok=False` 且不抛异常，所以 `--headless`、无 Tk、无显示三种情况都走同一条回放循环。
 
+**控件文字要探测再决定语言。** 中文标签在没有 CJK 字体的机器上会变成空方块，而 Tk 无法自救：Tk 9.0.4 在这里的 `::tk::pkgconfig get fontsystem` 是 `x11`，只能访问服务器端位图字体（`tkfont.families()` 只有 `fixed` 一项），读不到任何 TTF，所以装 `fonts-noto-cjk` 也没用。`using_chinese()` 就一句 `tkfont.nametofont('TkDefaultFont').measure('回放') > 0`——没有字形时测量值为 0，有字体时是字号的若干倍。据此在 `TEXT_ZH` / `TEXT_EN` 之间选择，窗口标题一并切换，`VIEWPOINT_LANG` 可强制覆盖。
+
 ---
 
 ## 9. 传感与质量验收

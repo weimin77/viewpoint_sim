@@ -23,8 +23,15 @@ test_speed_changes_are_read_live (test_playback.PlaybackTests.test_speed_changes
 test_speed_is_clamped_to_the_slider_range (test_playback.PlaybackTests.test_speed_is_clamped_to_the_slider_range) ... ok
 test_wait_while_paused_returns_immediately_when_not_paused (test_playback.PlaybackTests.test_wait_while_paused_returns_immediately_when_not_paused) ... ok
 test_wait_while_paused_returns_immediately_when_reset_is_pending (test_playback.PlaybackTests.test_wait_while_paused_returns_immediately_when_reset_is_pending) ... ok
+test_idle_step_returns (test_playback.StepTests.test_idle_step_returns) ... ok
+test_pause_keeps_waiting_while_everything_is_alive (test_playback.StepTests.test_pause_keeps_waiting_while_everything_is_alive) ... ok
+test_pause_unblocks_when_the_viewer_closes (test_playback.StepTests.test_pause_unblocks_when_the_viewer_closes)
+Closing the 3D window while paused used to block forever. ... ok
+test_quit_raises_abort (test_playback.StepTests.test_quit_raises_abort) ... ok
+test_reset_during_pause_raises_restart (test_playback.StepTests.test_reset_during_pause_raises_restart) ... ok
+test_reset_raises_restart_immediately (test_playback.StepTests.test_reset_raises_restart_immediately) ... ok
 
 ----------------------------------------------------------------------
-Ran 25 tests in 1.751s
+Ran 31 tests in 1.950s
 
 OK

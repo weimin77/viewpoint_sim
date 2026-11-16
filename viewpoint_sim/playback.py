@@ -73,7 +73,17 @@ def using_chinese(root):
 
 
 class Abort(Exception):
-    """Raised out of a running playback loop when the user restarts or quits."""
+    """Raised out of a running playback loop when the user quits."""
+
+
+class Restart(Exception):
+    """Raised when the user asks to play the run again from the first view.
+
+    Distinct from ``Abort`` because the replay loop must not exit: it drops the
+    pass it is in the middle of and starts over immediately. Latching the
+    request instead would make the button look broken for as long as the pass
+    still has to run - up to ten seconds on the demo dataset.
+    """
 
 
 class Playback:
@@ -92,6 +102,9 @@ class Playback:
         self.index = 0
         self.total = 0
         self.ui = None            # set to a Controls instance once one exists
+        # Set by the replay loop to "is the 3D window still open?". Without it a
+        # pause would outlive the viewer it belongs to and block forever.
+        self.stop_check = None
 
     @staticmethod
     def _clamp(value):
@@ -106,9 +119,37 @@ class Playback:
         if self.ui is not None:
             self.ui.poll()
 
+    def step(self):
+        """Frame hook: honour quit, restart and pause, in that order.
+
+        Called once per drawn frame from the execution loop, which is why it
+        takes no arguments - and why every playback mode funnels through it
+        instead of each keeping its own copy of the pause logic.
+        """
+        self.pump()
+        if self.quit:
+            raise Abort()
+        if self.reset:
+            raise Restart()
+        if self.paused:
+            self.wait_while_paused()
+            if self.quit:
+                raise Abort()
+            if self.reset:
+                raise Restart()
+
     def wait_while_paused(self):
-        """Block the loop while paused, still responding to reset/quit."""
+        """Block the loop while paused, still responding to reset/quit/close.
+
+        The viewer can go away while we are parked here - the user closes the 3D
+        window but leaves the panel open - so the loop asks ``stop_check`` too and
+        treats "the window I am driving is gone" as a quit.
+        """
         while self.paused and not self.quit and not self.reset:
+            if self.stop_check is not None and not self.stop_check():
+                self.quit = True
+                self.paused = False
+                return
             self.pump()
             time.sleep(.02)
 
@@ -205,11 +246,11 @@ class Controls:
 
         hint = tk.Frame(wrap, bg=BACKDROP)
         hint.pack(fill='x')
-        tk.Label(hint, text=f'{MIN_SPEED}×', bg=BACKDROP, fg=MUTED,
+        tk.Label(hint, text=f'{MIN_SPEED:g}×', bg=BACKDROP, fg=MUTED,
                  font=('TkDefaultFont', 8)).pack(side='left')
         tk.Label(hint, text=self.text['realtime'], bg=BACKDROP, fg=MUTED,
                  font=('TkDefaultFont', 8)).pack(side='left', padx=(26, 0))
-        tk.Label(hint, text=f'{MAX_SPEED}×', bg=BACKDROP, fg=MUTED,
+        tk.Label(hint, text=f'{MAX_SPEED:g}×', bg=BACKDROP, fg=MUTED,
                  font=('TkDefaultFont', 8)).pack(side='right')
 
         buttons = tk.Frame(wrap, bg=BACKDROP)
@@ -270,16 +311,15 @@ class Controls:
             self._refresh()
             self.root.update()
         except Exception:
-            # The window went away underneath us; keep the replay running.
+            # The window went away underneath us; keep the replay running but
+            # stop pretending we can still drive it.
             self.root = None
+            if self.state.ui is self:
+                self.state.ui = None
 
     def step(self):
-        """Frame hook: respond to pause, then let the replay continue."""
+        """Compatibility shim: prefer ``Playback.step``, which is a no-op here."""
         self.poll()
-        if self.state.quit:
-            raise Abort()
-        if self.state.paused:
-            self.state.wait_while_paused()
 
     def _refresh(self):
         if self.root is None:
@@ -300,10 +340,13 @@ class Controls:
 
     def close(self):
         if self.root is None:
+            if self.state.ui is self:
+                self.state.ui = None
             return
         try:
             self.root.destroy()
         except Exception:
             pass
         self.root = None
-        self.state.ui = None
+        if self.state.ui is self:
+            self.state.ui = None

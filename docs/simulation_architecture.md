@@ -616,6 +616,18 @@ raise RuntimeError('Position servo did not reach the configured settling criteri
 
 `Playback.pump()` 在没有 UI 时是空操作，`Controls` 创建失败时 `ok=False` 且不抛异常，所以 `--headless`、无 Tk、无显示三种情况都走同一条回放循环。
 
+**三种控制共用一条状态机。** 所有模式每个绘制帧都调 `Playback.step()`，它按 `quit` → `restart` → `pause` 的顺序判定，因此物理模式和运动学预览不可能对同一个按键给出不同反应：
+
+| 触发 | 异常 | 回放循环的处理 |
+|---|---|---|
+| 退出 / 关窗 | `Abort` | 结束整次回放 |
+| 暂停 | 无（就地阻塞） | `wait_while_paused()` 里继续泵事件 |
+| 重放 | `Restart` | **丢弃当前这一轮，立刻从第 1 个视点重新开始** |
+
+`Restart` 与 `Abort` 必须分开：如果「重放」只是置一个标志等本轮跑完再处理，按钮按下去后会沉默长达十秒（`outputs/demo` 在 4× 下一轮约 9.5 s），看起来像坏了。
+
+暂停循环还要知道「我在驱动的那个窗口是否还在」。`Playback.stop_check` 由回放循环设成 `_running(world)`；不检查的话，暂停时关掉三维窗口会永久阻塞——面板还开着，`quit` 永远不会被置位，只能 Ctrl+C。
+
 **控件文字要探测再决定语言。** 中文标签在没有 CJK 字体的机器上会变成空方块，而 Tk 无法自救：Tk 9.0.4 在这里的 `::tk::pkgconfig get fontsystem` 是 `x11`，只能访问服务器端位图字体（`tkfont.families()` 只有 `fixed` 一项），读不到任何 TTF，所以装 `fonts-noto-cjk` 也没用。`using_chinese()` 就一句 `tkfont.nametofont('TkDefaultFont').measure('回放') > 0`——没有字形时测量值为 0，有字体时是字号的若干倍。据此在 `TEXT_ZH` / `TEXT_EN` 之间选择，窗口标题一并切换，`VIEWPOINT_LANG` 可强制覆盖。
 
 ---
@@ -730,7 +742,7 @@ sample_rng, ik_rng, path_rng, jitter_rng = [default_rng(s) for s in seeds]
 | 墙钟节流在 `World` | `world.execute` | `execution` 不 sleep，GUI 节流统一由 `on_frame` 负责，所以两条循环都必须在无 viewer 时才完全确定 |
 | 播放速度与仿真速度脱钩 | `cli.py --speed` | 默认 4× 只为好看动；`max_joint_speed_rad_s=0.45` 远低于真机的 2~3 rad/s，想缩短仿真时长要改这个（并换基线） |
 | 控件窗口是独立 Tk 窗口 | `playback.py` | MuJoCo 查看器无控件 API；两个窗口同线程，Tk 用 `update()` 泵事件 |
-| 运动学预览不积分动力学 | `cli.replay` | 与 `--physics` 同一时间表、同一视觉速度，但直接写 `qpos`；它证明路径与几何，不证明可达性 |
+| 运动学预览不积分动力学 | `cli.replay` | 与 `--physics` 同一时间表、同一视觉速度、同一条 `Playback.step()` 状态机，但直接写 `qpos`；它证明路径与几何，不证明可达性 |
 | `model.geom_group` 被运行时改写 | `world.isolated_food_masks` | 有 `try/finally` 恢复，但若进程被杀会残留（仅影响当次进程） |
 | `renderer` 缓存不随分辨率释放 | `world.renderers` | 只按 `(w,h)` 缓存，`close()` 统一释放 |
 | 选择策略缺失 | `planner.run` | 仍是"先通过先接受"；`summary.view_ids_ranked_by_tray_ratio` 只做事后排序，不参与选择 |

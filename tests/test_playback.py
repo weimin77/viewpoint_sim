@@ -1,5 +1,7 @@
 """Playback state tests: the part of the replay controls that needs no window."""
 import os
+import threading
+import time
 import unittest
 from unittest import mock
 
@@ -87,3 +89,69 @@ class LabelTests(unittest.TestCase):
 
     def test_both_label_sets_define_the_same_keys(self):
         self.assertEqual(set(playback.TEXT_EN), set(playback.TEXT_ZH))
+
+
+class StepTests(unittest.TestCase):
+    """The frame hook is the only place quit/restart/pause are decided."""
+
+    def test_idle_step_returns(self):
+        Playback().step()                     # nothing pending: must not raise
+
+    def test_quit_raises_abort(self):
+        state = Playback()
+        state.quit = True
+        with self.assertRaises(playback.Abort):
+            state.step()
+
+    def test_reset_raises_restart_immediately(self):
+        state = Playback()
+        state.reset = True
+        with self.assertRaises(playback.Restart):
+            state.step()
+
+    def test_reset_during_pause_raises_restart(self):
+        state = Playback()
+        state.paused = True
+
+        def press_reset():
+            time.sleep(.05)
+            state.reset = True
+
+        thread = threading.Thread(target=press_reset, daemon=True)
+        thread.start()
+        with self.assertRaises(playback.Restart):
+            state.step()
+        thread.join()
+
+    def test_pause_unblocks_when_the_viewer_closes(self):
+        """Closing the 3D window while paused used to block forever."""
+        state = Playback()
+        state.paused = True
+        alive = {'yes': True}
+        state.stop_check = lambda: alive['yes']
+        finished = threading.Event()
+
+        def waiter():
+            state.wait_while_paused()
+            finished.set()
+
+        thread = threading.Thread(target=waiter, daemon=True)
+        thread.start()
+        time.sleep(.1)
+        self.assertFalse(finished.is_set())      # parked while the window lives
+        alive['yes'] = False
+        self.assertTrue(finished.wait(2.0))      # and released when it dies
+        self.assertTrue(state.quit)
+        thread.join()
+
+    def test_pause_keeps_waiting_while_everything_is_alive(self):
+        state = Playback()
+        state.paused = True
+        state.stop_check = lambda: True
+        finished = threading.Event()
+        threading.Thread(target=lambda: (state.wait_while_paused(),
+                                         finished.set()), daemon=True).start()
+        time.sleep(.15)
+        self.assertFalse(finished.is_set())
+        state.paused = False
+        self.assertTrue(finished.wait(2.0))

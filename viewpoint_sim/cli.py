@@ -3,10 +3,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image,ImageDraw
 from .config import load_config
-from .playback import Abort, Playback, Controls
-
-
-FRAME_DT=0.025   # ~40 fps for the kinematic preview
+from .playback import FRAME_DT, Abort, Controls, Playback, Restart
 
 
 def _running(world):
@@ -20,20 +17,18 @@ def _kinematic_view(world,motion,path,state,edge_duration):
     drawn frame instead of by a fixed sample stride: changing the slider then
     changes how fast the arm covers the remaining distance, rather than
     re-timing a ladder that was fixed when the view started.
+
+    Pause, restart and quit all arrive through ``state.step()`` so this mode
+    cannot drift from the physics one.
     """
     for a,b in zip(path,path[1:]):
         a,b=np.array(a),np.array(b)
         duration=max(edge_duration(float(np.max(np.abs(b-a))),motion),1e-9)
         u=0.0
         while u<1.0:
-            if state.quit:raise Abort()
-            if state.paused:
-                state.wait_while_paused()
-                if state.quit:raise Abort()
-                continue
+            state.step()
             world.set_q(a+(b-a)*u)
             if world.viewer is not None:
-                state.pump()
                 world.viewer.sync()
                 time.sleep(FRAME_DT)
             u+=FRAME_DT*state.get_speed()/duration
@@ -56,11 +51,12 @@ def replay(result,gui=True,gif=None,physics=False,speed=1.0,controls=True):
     frames=[]
     with World(cfg,gui=gui,speed=state.get_speed()) as world:
         world.speed_source=state.get_speed
-        world.frame_hook=panel.step if panel is not None else None
+        state.stop_check=lambda:_running(world)
+        world.frame_hook=state.step if panel is not None else None
         try:
             while True:
                 state.start(len(views))
-                aborted=False
+                aborted=restarted=False
                 for index,view in enumerate(views):
                     if not _running(world) or state.quit:aborted=True;break
                     path=view['path_q_rad']
@@ -84,6 +80,8 @@ def replay(result,gui=True,gif=None,physics=False,speed=1.0,controls=True):
                             world.set_q(np.array(path[-1]))
                         else:
                             _kinematic_view(world,motion,path,state,edge_duration)
+                    except Restart:
+                        restarted=True;break
                     except Abort:
                         aborted=True;break
                     if panel is not None:
@@ -92,6 +90,11 @@ def replay(result,gui=True,gif=None,physics=False,speed=1.0,controls=True):
                 if gif:
                     if frames:frames[0].save(gif,save_all=True,append_images=frames[1:],duration=120,loop=0,optimize=True)
                     break
+                if restarted:
+                    # Drop this pass and start over now, without waiting for it
+                    # to finish: the button has to feel immediate.
+                    state.take_reset()
+                    continue
                 if aborted or world.viewer is None:break
                 # Playback is done; keep the window alive so 重放 still works.
                 state.finish()
@@ -99,8 +102,9 @@ def replay(result,gui=True,gif=None,physics=False,speed=1.0,controls=True):
                 while _running(world):
                     if panel is not None:
                         panel.poll()
-                    else:
-                        world.viewer.sync()
+                    # Sync unconditionally: if the panel died (root gone) the
+                    # window must keep repainting instead of looking hung.
+                    world.viewer.sync()
                     if state.take_reset():again=True;break
                     if state.quit:break
                     time.sleep(.03)

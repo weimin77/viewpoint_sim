@@ -7,40 +7,13 @@ import numpy as np
 from PIL import Image
 from scipy.spatial.transform import Rotation
 from .acquisition import inspect_capture, save_capture
-from .geometry import box_vertices, inv, project, image_contains, tray_ratio, angle_deg
+from .comparison import compare_heights
+from .feasibility import check as feasibility_check
+from .geometry import inv
+from .diversity import duplicate_reason, min_pairwise_angle_deg
 from .pose_generation import candidate_pose
+from .report import make_report
 from .motion import plan, interpolate
-
-
-def geometry_check(cfg, T_BC, height_index):
-    roi, cam, sampling = cfg["roi"], cfg["camera"], cfg["sampling"]
-    pad = roi["margin_m"]
-    food = box_vertices(np.array(roi["food_min_B"])-pad, np.array(roi["food_max_B"])+pad)
-    uv,z = project(food,T_BC,cam["rgb"])
-    margin = np.array(sampling["image_margin_fraction"])*[cam["rgb"]["width"],cam["rgb"]["height"]]
-    if not image_contains(uv,z,cam["rgb"],margin):
-        return None,"food_out_of_rgb_fov"
-    duv,dz = project(food,T_BC@np.array(cam["T_CD"]),cam["depth"])
-    if not image_contains(duv,dz,cam["depth"],margin):
-        return None,"food_out_of_depth_fov"
-    lo,hi = cam["depth_range_m"]
-    if dz.min() < lo or dz.max() > hi:
-        return None,"depth_range"
-    tilt = angle_deg(T_BC[:3,2],[0,0,-1])
-    if tilt > sampling["max_tilt_deg"]:
-        return None,"tilt"
-    tuv,tz = project(np.array(roi["tray_corners_B"]),T_BC,cam["rgb"])
-    if np.any(tz <= 0):
-        return None,"tray_behind_camera"
-    ratio = tray_ratio(tuv,cam["rgb"])
-    thresholds = sampling["tray_min_ratio_by_height"]
-    if len(thresholds) != len(sampling["heights_above_tray_m"]):
-        raise ValueError("tray_min_ratio_by_height must have one entry per configured height")
-    if ratio < thresholds[height_index]:
-        return None,"tray_ratio"
-    return dict(food_uv=uv.tolist(),tray_uv=tuv.tolist(),tray_ratio_raw=ratio,
-                roi_depth_min_m=float(dz.min()),roi_depth_max_m=float(dz.max()),
-                tilt_deg=tilt,margin_px=margin.tolist()),None
 
 
 def execute_path(world, path):
@@ -76,13 +49,11 @@ def run(world, output):
                     cfg, height_index, sample_rng, jitter_rng)
                 eye = eye.tolist()
                 state = dict(id=candidate_id,base_height_above_tray_m=h,height_above_tray_m=actual_height,z_jitter_m=jitter,eye_B_m=eye)
-                geometry, reason = geometry_check(cfg,target,height_index)
+                geometry, reason = feasibility_check(cfg,target,height_index)
                 capture, solution, path, ik_quality = None,None,None,None
                 if reason is None:
                     # Early duplicate rejection has the same set semantics, avoids costly IK/rendering.
-                    compare = all_axes if s["deduplicate_across_heights"] else axes
-                    if any(angle_deg(target[:3,2],d) < s["min_axis_angle_deg"] for d in compare):
-                        reason = "duplicate_axis"
+                    reason = duplicate_reason(cfg, target[:3, 2], axes, all_axes)
                 if reason is None:
                     solutions = world.kin.solve(target@inv(world.mount),current,ik_rng,cfg["robot"])
                     reason = "ik_or_singularity"
@@ -98,12 +69,12 @@ def run(world, output):
                             continue
                         world.set_q(q)
                         actual = world.camera_pose()
-                        actual_geometry,geo_error = geometry_check(cfg,actual,height_index)
+                        actual_geometry,geo_error = feasibility_check(cfg,actual,height_index)
                         if geo_error:
                             reason = "actual_"+geo_error
                             continue
-                        if any(angle_deg(actual[:3,2],d) < s["min_axis_angle_deg"] for d in compare):
-                            reason = "duplicate_axis"
+                        reason = duplicate_reason(cfg, actual[:3,2], axes, all_axes)
+                        if reason is not None:
                             continue
                         cap = inspect_capture(world,actual)
                         if cap["failures"]:
@@ -130,7 +101,7 @@ def run(world, output):
                     re = float(np.degrees(Rotation.from_matrix(actual[:3,:3].T@target[:3,:3]).magnitude()))
                     if pe > cfg["robot"]["ik_position_tolerance_m"] or re > cfg["robot"]["ik_rotation_tolerance_deg"]:
                         raise RuntimeError("Arrived camera pose exceeds tolerance")
-                    geometry, arrived_geometry_error = geometry_check(cfg,actual,height_index)
+                    geometry, arrived_geometry_error = feasibility_check(cfg,actual,height_index)
                     capture = inspect_capture(world,actual)
                     if arrived_geometry_error or capture['failures']:
                         reason = 'arrived_'+(arrived_geometry_error or capture['failures'][0])
@@ -164,11 +135,10 @@ def run(world, output):
                                 attempts=attempts,rejections=dict(failures),
                                 complete=count==s["target_per_height"],acceptance_rate=count/max(1,attempts)))
             print(f"Height {h:.3f} m finished: {count}/{s['target_per_height']}; rejected {dict(failures)}",flush=True)
-    pairs = [angle_deg(a,b) for i,a in enumerate(all_axes) for b in all_axes[i+1:]]
     summary = dict(schema_version=2,engine="mujoco",robot_model=cfg['robot']['model'],created_utc=datetime.now(timezone.utc).isoformat(),
                    seed=cfg["seed"],complete=all(x["complete"] for x in heights),
                    accepted_total=len(accepted),heights=heights,
-                   minimum_axis_angle_deg=min(pairs) if pairs else None,
+                   minimum_axis_angle_deg=min_pairwise_angle_deg(all_axes),
                    elapsed_seconds=time.monotonic()-start_time,
                    simulation_limits=["Example inertias/servo gains, not calibrated hardware dynamics",
                                       "Ideal aligned undistorted RGB-D; no stereo matching/noise/material physics",
@@ -178,10 +148,8 @@ def run(world, output):
         str(h): [v['id'] for v in sorted((v for v in accepted if v['base_height_above_tray_m']==h),
                                         key=lambda v:v['geometry']['tray_ratio_raw'],reverse=True)]
         for h in s['heights_above_tray_m']}
-    from .comparison import compare_heights
     compare_heights(cfg,accepted,output)
     (output/"summary.json").write_text(json.dumps(summary,indent=2,ensure_ascii=False),encoding="utf-8")
     (output/"views.json").write_text(json.dumps(accepted,indent=2,ensure_ascii=False),encoding="utf-8")
-    from .report import make_report
     make_report(output,cfg,accepted,summary)
     return summary

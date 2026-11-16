@@ -8,7 +8,7 @@ from viewpoint_sim.geometry import look_at,inv,project,box_vertices,image_contai
 from viewpoint_sim.world import World
 from viewpoint_sim.motion import edge_free
 from viewpoint_sim.acquisition import inspect_capture,save_capture
-from viewpoint_sim.planner import geometry_check
+from viewpoint_sim.feasibility import check as feasibility_check
 
 
 class GeometryAndConfigTests(unittest.TestCase):
@@ -49,7 +49,7 @@ class GeometryAndConfigTests(unittest.TestCase):
         c=load_config();center=(np.array(c['roi']['food_min_B'])+c['roi']['food_max_B'])/2
         for h in [.10,.65]:
             T=look_at([center[0],center[1],c['roi']['tray_z_B_m']+h],center)
-            g,reason=geometry_check(c,T,0);self.assertIsNone(g);self.assertIsNotNone(reason)
+            g,reason=feasibility_check(c,T,0);self.assertIsNone(g);self.assertIsNotNone(reason)
 
 
 class MuJoCoWorldTests(unittest.TestCase):
@@ -92,7 +92,7 @@ class MuJoCoWorldTests(unittest.TestCase):
         self.assertTrue(all(w.model.geom_group[g]==2 for g in w.food_geoms))
 
     def test_default_crop_disabled_and_optional_crop_exact(self):
-        w=self.world;cap=inspect_capture(w,self.T);g,err=geometry_check(self.cfg,self.T,1);self.assertIsNone(err)
+        w=self.world;cap=inspect_capture(w,self.T);g,err=feasibility_check(self.cfg,self.T,1);self.assertIsNone(err)
         with tempfile.TemporaryDirectory() as tmp:
             none=Path(tmp)/'none';meta=save_capture(none,cap,{},g,self.cfg)
             self.assertFalse((none/'crop_rgb.png').exists());self.assertIsNone(meta['crop_bbox_xyxy'])

@@ -1,15 +1,19 @@
 """Standalone walkthrough of the XY sampling + look-at step.
 
-This file re-implements, in one place and with comments, the part of the
-pipeline that turns "a rectangle in XY + a list of heights" into camera poses:
+This file shows, in one place and with comments, the part of the pipeline that
+turns "a rectangle in XY + a list of heights" into camera poses:
 
     sample X,Y  ->  add the height + jitter  ->  look_at  ->  geometry gates
 
-It deliberately imports nothing from ``viewpoint_sim.world``, so it needs no
-MuJoCo, no GPU and no display: sampling is pure geometry. Every gate below is
-the same arithmetic used by ``viewpoint_sim.planner.geometry_check``; the
-production code interleaves them with IK / collision / path planning, which is
-exactly what this demo leaves out so the sampling itself is visible.
+The three steps are imported, not copied, from
+``viewpoint_sim.pose_generation`` (sampling + Look-at) and
+``viewpoint_sim.feasibility`` (the six gates), so this demo cannot drift from
+the production verdict.
+
+It imports nothing from ``viewpoint_sim.world``, so it needs no MuJoCo, no GPU
+and no display: sampling is pure geometry. The production pipeline interleaves
+the same steps with IK / collision / path planning, which is exactly what this
+demo leaves out so the sampling itself is visible.
 
 Run:
     .venv/bin/python examples/xy_sampling/sample_xy.py
@@ -33,14 +37,9 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from viewpoint_sim.config import load_config
-from viewpoint_sim.geometry import (
-    angle_deg,
-    box_vertices,
-    image_contains,
-    look_at,
-    project,
-    tray_ratio,
-)
+from viewpoint_sim.geometry import box_vertices, look_at, project
+from viewpoint_sim.feasibility import check_detailed as _check_detailed
+from viewpoint_sim.diversity import duplicate_reason
 from viewpoint_sim.pose_generation import (
     camera_position as _camera_position,
     look_at_pose as _look_at_pose,
@@ -48,9 +47,11 @@ from viewpoint_sim.pose_generation import (
 
 
 # ---------------------------------------------------------------------------
-# 1-2. The two steps themselves live in the package:
-#      viewpoint_sim/pose_generation.py
-#      This demo imports them instead of copying, so there is one definition.
+# 1-3. The three steps themselves live in the package:
+#      viewpoint_sim/pose_generation.py   (sampling + Look-at)
+#      viewpoint_sim/feasibility.py       (the six gates)
+#      This demo imports them instead of copying, so there is one definition
+#      and the pictures below cannot drift from the production verdict.
 # ---------------------------------------------------------------------------
 def sample_eye(cfg, height_index, rng, jitter_rng):
     """步骤 1：plane position + height + Z jitter -> optical centre.
@@ -66,67 +67,14 @@ def pose_from_eye(cfg, eye):
     return _look_at_pose(cfg, eye)
 
 
-# ---------------------------------------------------------------------------
-# 3. The geometry gates, in the same order and with the same names as production
-# ---------------------------------------------------------------------------
 def check_geometry(cfg, T_BC, height_index):
-    """Return (metrics, None) if the pose passes, else (partial_metrics, reason)."""
-    roi, cam, sampling = cfg["roi"], cfg["camera"], cfg["sampling"]
+    """步骤 3：the gates, keeping partial metrics so the drawing can show why.
 
-    # The ROI is grown by roi.margin_m before the check so a pose that only just
-    # fits is not accepted - the margin is the "do not sit on the border" budget.
-    pad = roi["margin_m"]
-    food = box_vertices(np.array(roi["food_min_B"]) - pad,
-                        np.array(roi["food_max_B"]) + pad)
-
-    # -- Gate 1: does the whole 3D box land inside the RGB frame? -------------
-    # 8 corners, pinhole projection, then a rectangular containment test.
-    uv, z = project(food, T_BC, cam["rgb"])
-    margin = np.array(sampling["image_margin_fraction"]) * [cam["rgb"]["width"], cam["rgb"]["height"]]
-    if not image_contains(uv, z, cam["rgb"], margin):
-        return {"food_uv": uv.tolist()}, "food_out_of_rgb_fov"
-
-    # -- Gate 2: same test against the depth camera ---------------------------
-    # T_CD is the third camera in the chain; here it is identity because the
-    # depth and colour sensors are modelled as perfectly aligned.
-    duv, dz = project(food, T_BC @ np.array(cam["T_CD"]), cam["depth"])
-    if not image_contains(duv, dz, cam["depth"], margin):
-        return {"food_uv": uv.tolist(), "food_depth_uv": duv.tolist()}, "food_out_of_depth_fov"
-
-    # -- Gate 3: is the whole box inside the sensor's working range? ----------
-    lo, hi = cam["depth_range_m"]
-    if dz.min() < lo or dz.max() > hi:
-        return {"food_uv": uv.tolist(), "roi_depth_min_m": float(dz.min()),
-                "roi_depth_max_m": float(dz.max())}, "depth_range"
-
-    # -- Gate 4: tilt of the optical axis away from straight down -------------
-    tilt = angle_deg(T_BC[:3, 2], [0, 0, -1])
-    if tilt > sampling["max_tilt_deg"]:
-        return {"food_uv": uv.tolist(), "tilt_deg": tilt}, "tilt"
-
-    # -- Gate 5: the tray must be in front of the camera, not behind it -------
-    tuv, tz = project(np.array(roi["tray_corners_B"]), T_BC, cam["rgb"])
-    if np.any(tz <= 0):
-        return {"food_uv": uv.tolist(), "tilt_deg": tilt}, "tray_behind_camera"
-
-    # -- Gate 6: how much of the frame does the tray cover? -------------------
-    ratio = tray_ratio(tuv, cam["rgb"])
-    thresholds = sampling["tray_min_ratio_by_height"]
-    if len(thresholds) != len(sampling["heights_above_tray_m"]):
-        raise ValueError("tray_min_ratio_by_height must have one entry per configured height")
-    metrics = {
-        "food_uv": uv.tolist(),
-        "food_z": z.tolist(),
-        "tray_uv": tuv.tolist(),
-        "tray_ratio_raw": ratio,
-        "roi_depth_min_m": float(dz.min()),
-        "roi_depth_max_m": float(dz.max()),
-        "tilt_deg": tilt,
-        "margin_px": margin.tolist(),
-    }
-    if ratio < thresholds[height_index]:
-        return metrics, "tray_ratio"
-    return metrics, None
+    Production calls ``feasibility.check`` (same gates, metrics dropped on
+    rejection); the demo calls ``check_detailed`` because the rejected poses are
+    exactly what the top-down map needs to annotate.
+    """
+    return _check_detailed(cfg, T_BC, height_index)
 
 
 # ---------------------------------------------------------------------------
@@ -402,9 +350,7 @@ def run(cfg, seed=None, quiet=False):
             # Dedupe comes before the (expensive) robot checks in production;
             # here it is the last gate because everything else is already cheap.
             if reason is None:
-                compare = all_axes if s["deduplicate_across_heights"] else axes
-                if any(angle_deg(T_BC[:3, 2], d) < s["min_axis_angle_deg"] for d in compare):
-                    reason = "duplicate_axis"
+                reason = duplicate_reason(cfg, T_BC[:3, 2], axes, all_axes)
 
             ok = reason is None
             if ok:

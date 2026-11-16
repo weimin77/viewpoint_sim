@@ -6,7 +6,7 @@ from PIL import Image
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from viewpoint_sim.config import load_config
 from viewpoint_sim.world import World
-from viewpoint_sim.planner import geometry_check
+from viewpoint_sim.feasibility import check as feasibility_check
 from viewpoint_sim.motion import path_free
 from viewpoint_sim.geometry import angle_deg
 
@@ -24,7 +24,7 @@ def verify(root):
             assert np.linalg.norm(T[:3,3]-target[:3,3])<cfg['robot']['ik_position_tolerance_m']
             assert abs(v['z_jitter_m'])<=cfg['sampling']['z_jitter_m']+1e-12
             assert abs(target[2,3]-cfg['roi']['tray_z_B_m']-v['base_height_above_tray_m']-v['z_jitter_m'])<1e-10
-            assert geometry_check(cfg,T,v['height_index'])[1] is None
+            assert feasibility_check(cfg,T,v['height_index'])[1] is None
             for i,a in axes:
                 if cfg['sampling']['deduplicate_across_heights'] or i==v['height_index']:
                     assert angle_deg(T[:3,2],a)>=cfg['sampling']['min_axis_angle_deg']-1e-6

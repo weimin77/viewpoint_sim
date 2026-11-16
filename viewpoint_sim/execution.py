@@ -22,6 +22,20 @@ def stats_template(mode):
     return {'mode': mode, 'physics_steps': 0, 'max_joint_speed_rad_s': 0.0}
 
 
+def edge_duration(delta, motion):
+    """Simulated seconds a joint-space edge of span ``delta`` should take.
+
+    Minimum-jerk needs this long to stay under both the speed and the
+    acceleration limit; ``dt`` is the floor, never a zero-length edge. Both the
+    servo follower and the kinematic preview use it, so the two replays show the
+    same timing and ``--speed`` means the same thing in both.
+    """
+    dt = motion['timestep_s']
+    return max(1.5 * delta / motion['max_joint_speed_rad_s'],
+               np.sqrt(6 * delta / motion['max_joint_accel_rad_s2']),
+               dt)
+
+
 def kinematic(path, motion, *, set_q, collide, on_frame=None, sync_every=1):
     """Step through interpolated joint states, aborting on any collision.
 
@@ -91,14 +105,9 @@ class Servo:
     def follow(self, path):
         """Track the path edge by edge, then hold the goal until settled."""
         dt = self.model.opt.timestep
-        speed = self.motion['max_joint_speed_rad_s']
-        accel = self.motion['max_joint_accel_rad_s2']
         for start, end in zip(path, path[1:]):
             start, end = np.array(start), np.array(end)
-            delta = np.max(np.abs(end - start))
-            # Minimum-jerk profile needs this long to stay under the speed and
-            # acceleration limits; dt is the floor, never a zero-length edge.
-            duration = max(1.5 * delta / speed, np.sqrt(6 * delta / accel), dt)
+            duration = edge_duration(float(np.max(np.abs(end - start))), self.motion)
             for u in np.linspace(0, 1, max(2, int(np.ceil(duration / dt)) + 1)):
                 self.step(start + (end - start) * (3 * u * u - 2 * u * u * u))
         return self.settle(np.array(path[-1]))

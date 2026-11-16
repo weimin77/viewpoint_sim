@@ -158,7 +158,7 @@ self.data  = mujoco.MjData(self.model)
 | 字段 | 含义 |
 |---|---|
 | `joint_ids` | 6 个受控关节的 `mjModel.jnt_*` 索引（顺序取自 `kin.names`） |
-| `qadr` / `dadr` | 对应的 `qpos` / `qvel` 地址 |
+| `qadr` / `dadr` | 对應的 `qpos` / `qvel` 地址 |
 | `flange` | 法兰 body id（`cfg.robot.flange_link`，当前 `link6`） |
 | `optical_site` | `site "camera_optical"` 的 id |
 | `camera_id` | `camera "render_camera"` 的 id |
@@ -551,7 +551,11 @@ for index, a in enumerate(robot_geoms):
 
 两条循环都在 `execution.py`，`World.execute` 只是把 `model`/`data` 和三个回调（`set_q`、`current_q`、`collide`）交给它。模块不 import `World`，也不 sleep——墙钟节流是 `world.execute` 里 `on_frame` 的事，因为只有带 GUI 时才需要。
 
-节流有个 `speed` 倍率（CLI `--speed`，默认 4）。它满足两条约束：**帧间隔固定**（物理模式 `dt×12 ≈ 24 ms`，约 41 fps），**帧跨步随倍率增大**（`sync_every = 12×speed`）。于是倍率只缩短总时长，不会让画面变卡，也不会漏掉任何一次 `collide()`——被跳过的只是绘制。倍率乘不进步长、不进度数、不进取样，所以 `--speed` 取任何值，落盘数据逐字节相同。
+节流有个 `speed` 倍率（CLI `--speed`，默认 4）。它满足两条约束：**帧间隔固定**（物理模式 `dt×12 ≈ 24 ms`，约 41 fps；运动学预览约 40 fps），**帧跨步随倍率增大**（`sync_every = 12×speed`）。于是倍率只缩短总时长，不会让画面变卡，也不会漏掉任何一次 `collide()`——被跳过的只是绘制。倍率乘不进步长、不进度数、不进取样，所以 `--speed` 取任何值，落盘数据逐字节相同。
+
+**两种回放共用一张时间表**：`execution.edge_duration(delta, motion)` 给出每条关节边应占的仿真时长（最小加加速度，同时受速度与加速度限制，`dt` 为下限）。`Servo.follow` 用它安排 `mj_step` 的次数，`replay` 的运动学预览用它安排墙钟时长，因此不加 `--physics` 时的视觉速度与加 `--physics` 完全一致——区别只在于前者直接写 `qpos`（不积分动力学），后者真的步进。
+
+运动学预览的采样密度按帧预算反推：需要更多帧时细化采样（慢放仍然平滑），需要更少帧时按 `every` 抽帧绘制，但 `set_q` 每个采样点都执行。`--gif` 例外：它逐帧保存、不睡、仍用 0.16 rad 的粗采样，因此生成的 GIF 与改动前逐字节相同。
 
 `cfg.motion.execution_mode` 决定走哪条：
 
@@ -707,6 +711,7 @@ sample_rng, ik_rng, path_rng, jitter_rng = [default_rng(s) for s in seeds]
 | 粗筛用球包围 | `collision.Checker` | `geom_rbound` 球间隙 ≥ margin 时精确距离必然 ≥ margin，故无漏检；但球比凸包大时会多做精确查询 |
 | 墙钟节流在 `World` | `world.execute` | `execution` 不 sleep，GUI 节流统一由 `on_frame` 负责，所以两条循环都必须在无 viewer 时才完全确定 |
 | 播放速度与仿真速度脱钩 | `cli.py --speed` | 默认 4× 只为好看动；`max_joint_speed_rad_s=0.45` 远低于真机的 2~3 rad/s，想缩短仿真时长要改这个（并换基线） |
+| 运动学预览不积分动力学 | `cli.replay` | 与 `--physics` 同一时间表、同一视觉速度，但直接写 `qpos`；它证明路径与几何，不证明可达性 |
 | `model.geom_group` 被运行时改写 | `world.isolated_food_masks` | 有 `try/finally` 恢复，但若进程被杀会残留（仅影响当次进程） |
 | `renderer` 缓存不随分辨率释放 | `world.renderers` | 只按 `(w,h)` 缓存，`close()` 统一释放 |
 | 选择策略缺失 | `planner.run` | 仍是"先通过先接受"；`summary.view_ids_ranked_by_tray_ratio` 只做事后排序，不参与选择 |

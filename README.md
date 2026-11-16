@@ -36,6 +36,16 @@ bash scripts/setup.sh
 .venv/bin/python -m viewpoint_sim run --gui --output outputs/my_gui_run
 ```
 
+`replay` 与 `run` 都接受 `--speed`（默认 `4`）：它只压缩**墙钟播放时长**，不影响任何记录值（关节路径、`physics_steps`、位姿、像素都不变）。`--speed 1` 为原速实时，`--speed 8` 更快。
+
+加不加 `--physics` 的**视觉速度相同**：两者共用同一条时间表（按关节行程与速度/加速度上限算出的最小加加速度时长）；区别是 `--physics` 真的用位置伺服步进，不加时直接写入关节角，只看路径。
+
+```bash
+.venv/bin/python -m viewpoint_sim replay --result outputs/demo            # 约 9 秒看完
+.venv/bin/python -m viewpoint_sim replay --result outputs/demo --speed 1  # 实时，约 37 秒
+.venv/bin/python -m viewpoint_sim replay --result outputs/demo --physics  # 位置伺服，约 13 秒
+```
+
 安装脚本默认创建 Python 3.12 环境，并使用清华 PyPI 镜像与 120 秒读取超时。可以自行指定其他源：
 
 ```bash

@@ -5,17 +5,18 @@ from PIL import Image,ImageDraw
 from .config import load_config
 
 
+FRAME_DT=0.025   # ~40 fps for the kinematic preview
+
+
 def replay(result,gui=True,gif=None,physics=False,speed=1.0):
     from .world import World
     from .motion import interpolate,path_free
+    from .execution import edge_duration
     root=Path(result);cfg=load_config(root/'config.json')
+    motion=cfg['motion']
     views=json.loads((root/'views.json').read_text(encoding='utf-8'))
     if not views:raise ValueError('No accepted views to replay')
     frames=[]
-    # A GIF needs every frame; a live window only needs a steady frame rate, so
-    # the preview walks every `stride`-th interpolated point instead of drawing
-    # all of them slowly. Physics replays pace themselves inside World.execute.
-    stride=1 if gif else max(1,int(round(speed)))
     with World(cfg,gui=gui,speed=speed) as world:
         for view in views:
             path=view['path_q_rad']
@@ -24,20 +25,38 @@ def replay(result,gui=True,gif=None,physics=False,speed=1.0):
             if physics:
                 world.execute(path)
             else:
-                frame=0
+                # Kinematic preview: the SAME schedule as the servo replay, but
+                # qpos is written directly so no dynamics are integrated. Sampling
+                # uses the planning resolution, so the arm travels the path it
+                # actually recorded; only the drawing is thinned to hold ~40 fps.
                 for a,b in zip(path,path[1:]):
-                    for q in interpolate(np.array(a),np.array(b),.16):
+                    a,b=np.array(a),np.array(b)
+                    if gif:
+                        samples=interpolate(a,b,.16)   # a GIF needs every frame
+                        every,delay=1,0.0
+                    else:
+                        duration=edge_duration(float(np.max(np.abs(b-a))),motion)/max(speed,.05)
+                        want=max(2,int(np.ceil(duration/FRAME_DT))+1)
+                        samples=interpolate(a,b,motion['edge_resolution_rad'])
+                        if want>=len(samples):
+                            # Slow playback: resample FINER so the arm still moves
+                            # smoothly, instead of stretching a few poses apart.
+                            samples=np.linspace(a,b,want);every=1
+                        else:
+                            every=max(1,int(round(len(samples)/want)))
+                        delay=duration/max(1,int(np.ceil(len(samples)/every)))
+                    for i,q in enumerate(samples):
                         world.set_q(q)
-                        if gui and frame%stride==0:world.viewer.sync();time.sleep(.04)
-                        if gif:
-                            scene=Image.fromarray(world.overview()).resize((660,440))
-                            rgb=Image.fromarray(world.render(world.camera_pose())[0]).resize((320,180))
-                            canvas=Image.new('RGB',(1000,440),'#0e1825');canvas.paste(scene,(0,0));canvas.paste(rgb,(670,125))
-                            d=ImageDraw.Draw(canvas);d.text((680,24),'MUJOCO / myCobot Pro 630',fill='#72dfbe')
-                            d.text((680,60),f"Height: {view['height_above_tray_m']*1000:.0f} mm",fill='white')
-                            d.text((680,86),view['id'],fill='white');d.text((680,340),'KINEMATIC PATH PREVIEW',fill='#a0b3c5')
-                            frames.append(canvas)
-                        frame+=1
+                        if (gui or gif) and i%every==0:
+                            if gui:world.viewer.sync();time.sleep(delay)
+                            if gif:
+                                scene=Image.fromarray(world.overview()).resize((660,440))
+                                rgb=Image.fromarray(world.render(world.camera_pose())[0]).resize((320,180))
+                                canvas=Image.new('RGB',(1000,440),'#0e1825');canvas.paste(scene,(0,0));canvas.paste(rgb,(670,125))
+                                d=ImageDraw.Draw(canvas);d.text((680,24),'MUJOCO / myCobot Pro 630',fill='#72dfbe')
+                                d.text((680,60),f"Height: {view['height_above_tray_m']*1000:.0f} mm",fill='white')
+                                d.text((680,86),view['id'],fill='white');d.text((680,340),'KINEMATIC PATH PREVIEW',fill='#a0b3c5')
+                                frames.append(canvas)
             if gif and frames:frames.extend([frames[-1].copy()]*2)
         if gif and frames:frames[0].save(gif,save_all=True,append_images=frames[1:],duration=120,loop=0,optimize=True)
         if gui:

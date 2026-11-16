@@ -40,20 +40,21 @@
 | `feasibility.py` | 140 | 纯 | 六道几何门 | `check` `check_detailed` `padded_food_corners` `image_margin_px` `tray_threshold` |
 | `diversity.py` | 63 | 纯 | 光轴去重与最小夹角统计 | `comparison_axes` `is_duplicate` `duplicate_reason` `min_pairwise_angle_deg` |
 | `quality.py` | 128 | 纯 | 图像验收：可见率、深度有效率、构图 | `assess` `depth_valid_mask` `instance_labels` `food_metric` `food_failures` `FOOD_FAILURE_PRIORITY` |
+| `run_statistics.py` | 81 | 纯 | 汇总统计与 `summary.json` 契约 | `SIMULATION_LIMITS` `height_row` `view_ids_ranked_by_ratio` `build_summary` |
 | `kinematics.py` | 86 | 纯 | URDF 解析、FK、解析雅可比、有界多初值 IK | `Kinematics` `.fk()` `.solve()` |
 | `config.py` | 47 | 纯 | 装载 + 校验、安装外参 | `ROOT` `load_config` `validate_config` `mount_transform` `clone` |
 | `motion.py` | 78 | 纯 | 关节插值、边/路径检查、RRT-Connect | `interpolate` `edge_free` `path_free` `plan` |
 | **`model_builder.py`** | **145** | 适配 | **URDF + 配置 → MJCF 字符串** | `build_model_xml` `numbers` `quat` `origin` |
 | **`world.py`** | **205** | 适配 | **MuJoCo 封装：渲染、碰撞、伺服** | `World` `._camera` `.render` `.collision` `.execute` `.isolated_food_masks` `.export_scene` |
 | `acquisition.py` | 60 | 编排 | 渲染 → 调 `quality.assess` → 落盘 | `inspect_capture` `save_capture` |
-| `planner.py` | 157 | 编排 | 主流程：采样 → 门禁 → 执行 → 落盘 | `feasibility_check` `execute_path` `run` |
+| `planner.py` | 147 | 编排 | 主流程：采样 → 门禁 → 执行 → 落盘 | `feasibility_check` `execute_path` `run` |
 | `comparison.py` | 31 | 编排 | 同 XY 的平移 vs 重 Look-at 对照 | `compare_heights` |
 | `report.py` | 35 | 编排 | 生成零依赖离线 HTML | `make_report` |
 | `cli.py` | 86 | 编排 | 子命令 `run` / `replay` / `check` / `export-model` / `view` | `main` `replay` |
 
 `__init__.py` 里有一行关键的环境准备：Linux 无 `DISPLAY` 时自动 `MUJOCO_GL=egl`，这是无桌面环境能跑渲染的前提。
 
-分层的意义：`pose_generation` / `feasibility` / `diversity` / `quality` 四个模块只吃配置和数组，`examples/xy_sampling/` 因此可以直接复用前三个而不加载 MuJoCo。`planner.run()` 只负责循环和调用，不再做投影、多边形裁剪或夹角计算。
+分层的意义：`pose_generation` / `feasibility` / `diversity` / `quality` / `run_statistics` 五个纯模块只吃配置和已算好的数据，`examples/xy_sampling/` 因此可以直接复用前三个而不加载 MuJoCo。`planner.run()` 只负责循环和调用，不再做投影、多边形裁剪、夹角计算或汇总拼装。
 
 ### 2.2 依赖方向
 
@@ -71,6 +72,7 @@ graph TD
     planner --> motion
     planner --> comparison[comparison]
     planner --> report[report]
+    planner --> run_statistics[run_statistics]
 
     acquisition --> quality[quality]
     acquisition --> geometry[geometry]
@@ -95,6 +97,8 @@ graph TD
 
 - **MuJoCo 只在两处被 import**：`model_builder.py`（生成 XML 时不需要）实际只用到 `xml.etree`，真正的 `import mujoco` 只出现在 `world.py` 和 `cli.py` 的 `view` 分支；
 - 四个纯算法模块（`pose_generation` / `feasibility` / `diversity` / `quality`）只依赖 `geometry` 与 `config`，所以 `examples/xy_sampling/` 能复用它而不加载 MuJoCo；
+- `run_statistics` 只依赖 `diversity` 的 `min_pairwise_angle_deg`，不碰 `Counter`、`datetime` 或文件系统：`summary.json` 的每个数字都能在无仿真器的情况下单测；
+- 模块名刻意叫 `run_statistics` 而不是 `statistics`，避免遮蔽标准库同名模块；
 - `config.py` 的 `ROOT` 做了兜底：打包安装后若 `assets/` 不在上一级，则退回当前目录；
 - `planner` 与 `comparison` 之间**已无循环**：`comparison` 只依赖 `feasibility` 和 `geometry`，因此两者的 import 都在模块顶层，不再需要函数内延迟导入。
 

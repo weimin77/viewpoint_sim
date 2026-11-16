@@ -10,9 +10,10 @@ from .acquisition import inspect_capture, save_capture
 from .comparison import compare_heights
 from .feasibility import check as feasibility_check
 from .geometry import inv
-from .diversity import duplicate_reason, min_pairwise_angle_deg
+from .diversity import duplicate_reason
 from .pose_generation import candidate_pose
 from .report import make_report
+from .run_statistics import build_summary, height_row, view_ids_ranked_by_ratio
 from .motion import plan, interpolate
 
 
@@ -133,23 +134,12 @@ def run(world, output):
                     print(f"Height {h:.3f} m: accepted {count}/{s['target_per_height']} after {attempts} attempts",flush=True)
                 log.write(json.dumps(state,ensure_ascii=False)+"\n")
                 log.flush()
-            heights.append(dict(height_above_tray_m=h,accepted=count,target=s["target_per_height"],
-                                attempts=attempts,rejections=dict(failures),
-                                complete=count==s["target_per_height"],acceptance_rate=count/max(1,attempts)))
+            heights.append(height_row(h, count, s["target_per_height"], attempts, failures))
             print(f"Height {h:.3f} m finished: {count}/{s['target_per_height']}; rejected {dict(failures)}",flush=True)
-    summary = dict(schema_version=2,engine="mujoco",robot_model=cfg['robot']['model'],created_utc=datetime.now(timezone.utc).isoformat(),
-                   seed=cfg["seed"],complete=all(x["complete"] for x in heights),
-                   accepted_total=len(accepted),heights=heights,
-                   minimum_axis_angle_deg=min_pairwise_angle_deg(all_axes),
-                   elapsed_seconds=time.monotonic()-start_time,
-                   simulation_limits=["Example inertias/servo gains, not calibrated hardware dynamics",
-                                      "Ideal aligned undistorted RGB-D; no stereo matching/noise/material physics",
-                                      "Discrete collision checking; not continuous swept-volume certification",
-                                      "Example workcell and camera extrinsics; replace with measured values"])
-    summary['view_ids_ranked_by_tray_ratio'] = {
-        str(h): [v['id'] for v in sorted((v for v in accepted if v['base_height_above_tray_m']==h),
-                                        key=lambda v:v['geometry']['tray_ratio_raw'],reverse=True)]
-        for h in s['heights_above_tray_m']}
+    summary = build_summary(cfg, heights, accepted, all_axes,
+                            time.monotonic()-start_time,
+                            datetime.now(timezone.utc).isoformat())
+    summary['view_ids_ranked_by_tray_ratio'] = view_ids_ranked_by_ratio(cfg, accepted)
     compare_heights(cfg,accepted,output)
     (output/"summary.json").write_text(json.dumps(summary,indent=2,ensure_ascii=False),encoding="utf-8")
     (output/"views.json").write_text(json.dumps(accepted,indent=2,ensure_ascii=False),encoding="utf-8")

@@ -3,12 +3,44 @@ from pathlib import Path
 import numpy as np
 from PIL import Image,ImageDraw
 from .config import load_config
+from .playback import Abort, Playback, Controls
 
 
 FRAME_DT=0.025   # ~40 fps for the kinematic preview
 
 
-def replay(result,gui=True,gif=None,physics=False,speed=1.0):
+def _running(world):
+    return True if world.viewer is None else world.viewer.is_running()
+
+
+def _kinematic_view(world,motion,path,state,edge_duration):
+    """Walk one joint path in virtual time, so the slider acts immediately.
+
+    Progress along an edge is advanced by ``FRAME_DT * speed / duration`` per
+    drawn frame instead of by a fixed sample stride: changing the slider then
+    changes how fast the arm covers the remaining distance, rather than
+    re-timing a ladder that was fixed when the view started.
+    """
+    for a,b in zip(path,path[1:]):
+        a,b=np.array(a),np.array(b)
+        duration=max(edge_duration(float(np.max(np.abs(b-a))),motion),1e-9)
+        u=0.0
+        while u<1.0:
+            if state.quit:raise Abort()
+            if state.paused:
+                state.wait_while_paused()
+                if state.quit:raise Abort()
+                continue
+            world.set_q(a+(b-a)*u)
+            if world.viewer is not None:
+                state.pump()
+                world.viewer.sync()
+                time.sleep(FRAME_DT)
+            u+=FRAME_DT*state.get_speed()/duration
+    world.set_q(np.array(path[-1]))
+
+
+def replay(result,gui=True,gif=None,physics=False,speed=1.0,controls=True):
     from .world import World
     from .motion import interpolate,path_free
     from .execution import edge_duration
@@ -16,54 +48,65 @@ def replay(result,gui=True,gif=None,physics=False,speed=1.0):
     motion=cfg['motion']
     views=json.loads((root/'views.json').read_text(encoding='utf-8'))
     if not views:raise ValueError('No accepted views to replay')
+    state=Playback(speed)
+    panel=Controls(state) if (gui and controls and not gif) else None
+    if panel is not None and not panel.ok:
+        print('控制面板不可用（'+str(panel.error)+'），回放按 --speed 继续。',file=sys.stderr)
+        panel=None
     frames=[]
-    with World(cfg,gui=gui,speed=speed) as world:
-        for view in views:
-            path=view['path_q_rad']
-            if not path_free(world,path):raise RuntimeError('Replay path failed collision revalidation')
-            world.set_q(path[0])
-            if physics:
-                world.execute(path)
-            else:
-                # Kinematic preview: the SAME schedule as the servo replay, but
-                # qpos is written directly so no dynamics are integrated. Sampling
-                # uses the planning resolution, so the arm travels the path it
-                # actually recorded; only the drawing is thinned to hold ~40 fps.
-                for a,b in zip(path,path[1:]):
-                    a,b=np.array(a),np.array(b)
-                    if gif:
-                        samples=interpolate(a,b,.16)   # a GIF needs every frame
-                        every,delay=1,0.0
-                    else:
-                        duration=edge_duration(float(np.max(np.abs(b-a))),motion)/max(speed,.05)
-                        want=max(2,int(np.ceil(duration/FRAME_DT))+1)
-                        samples=interpolate(a,b,motion['edge_resolution_rad'])
-                        if want>=len(samples):
-                            # Slow playback: resample FINER so the arm still moves
-                            # smoothly, instead of stretching a few poses apart.
-                            samples=np.linspace(a,b,want);every=1
+    with World(cfg,gui=gui,speed=state.get_speed()) as world:
+        world.speed_source=state.get_speed
+        world.frame_hook=panel.step if panel is not None else None
+        try:
+            while True:
+                state.start(len(views))
+                aborted=False
+                for index,view in enumerate(views):
+                    if not _running(world) or state.quit:aborted=True;break
+                    path=view['path_q_rad']
+                    if not path_free(world,path):raise RuntimeError('Replay path failed collision revalidation')
+                    world.set_q(path[0])
+                    state.at_view(index+1,view['id'])
+                    try:
+                        if physics:
+                            world.execute(path)
+                        elif gif:
+                            for a,b in zip(path,path[1:]):
+                                for q in interpolate(np.array(a),np.array(b),.16):
+                                    world.set_q(q)
+                                    scene=Image.fromarray(world.overview()).resize((660,440))
+                                    rgb=Image.fromarray(world.render(world.camera_pose())[0]).resize((320,180))
+                                    canvas=Image.new('RGB',(1000,440),'#0e1825');canvas.paste(scene,(0,0));canvas.paste(rgb,(670,125))
+                                    d=ImageDraw.Draw(canvas);d.text((680,24),'MUJOCO / myCobot Pro 630',fill='#72dfbe')
+                                    d.text((680,60),f"Height: {view['height_above_tray_m']*1000:.0f} mm",fill='white')
+                                    d.text((680,86),view['id'],fill='white');d.text((680,340),'KINEMATIC PATH PREVIEW',fill='#a0b3c5')
+                                    frames.append(canvas)
+                            world.set_q(np.array(path[-1]))
                         else:
-                            every=max(1,int(round(len(samples)/want)))
-                        delay=duration/max(1,int(np.ceil(len(samples)/every)))
-                    for i,q in enumerate(samples):
-                        world.set_q(q)
-                        if (gui or gif) and i%every==0:
-                            if gui:world.viewer.sync();time.sleep(delay)
-                            if gif:
-                                scene=Image.fromarray(world.overview()).resize((660,440))
-                                rgb=Image.fromarray(world.render(world.camera_pose())[0]).resize((320,180))
-                                canvas=Image.new('RGB',(1000,440),'#0e1825');canvas.paste(scene,(0,0));canvas.paste(rgb,(670,125))
-                                d=ImageDraw.Draw(canvas);d.text((680,24),'MUJOCO / myCobot Pro 630',fill='#72dfbe')
-                                d.text((680,60),f"Height: {view['height_above_tray_m']*1000:.0f} mm",fill='white')
-                                d.text((680,86),view['id'],fill='white');d.text((680,340),'KINEMATIC PATH PREVIEW',fill='#a0b3c5')
-                                frames.append(canvas)
-            if gif and frames:frames.extend([frames[-1].copy()]*2)
-        if gif and frames:frames[0].save(gif,save_all=True,append_images=frames[1:],duration=120,loop=0,optimize=True)
-        if gui:
-            print('Replay finished. Close the MuJoCo window or press Ctrl+C.')
-            try:
-                while world.viewer.is_running():world.viewer.sync();time.sleep(.03)
-            except KeyboardInterrupt:pass
+                            _kinematic_view(world,motion,path,state,edge_duration)
+                    except Abort:
+                        aborted=True;break
+                    if panel is not None:
+                        panel.poll()
+                    if gif and frames:frames.extend([frames[-1].copy()]*2)
+                if gif:
+                    if frames:frames[0].save(gif,save_all=True,append_images=frames[1:],duration=120,loop=0,optimize=True)
+                    break
+                if aborted or world.viewer is None:break
+                # Playback is done; keep the window alive so 重放 still works.
+                state.finish()
+                again=False
+                while _running(world):
+                    if panel is not None:
+                        panel.poll()
+                    else:
+                        world.viewer.sync()
+                    if state.take_reset():again=True;break
+                    if state.quit:break
+                    time.sleep(.03)
+                if not again:break
+        finally:
+            if panel is not None:panel.close()
 
 
 def main(argv=None):
@@ -77,6 +120,7 @@ def main(argv=None):
     rep.add_argument('--result',default='outputs/demo');rep.add_argument('--headless',action='store_true')
     rep.add_argument('--gif');rep.add_argument('--physics',action='store_true',help='Execute with MuJoCo position servos')
     rep.add_argument('--speed',type=float,default=4.0,help='GUI playback speed multiplier; 1.0 = realtime. Never affects recorded data')
+    rep.add_argument('--no-controls',action='store_true',help='Do not open the speed/reset control window')
     check=sub.add_parser('check',help='Validate model, calibration settings, and initial collision')
     check.add_argument('--config')
     export=sub.add_parser('export-model',help='Export standalone MJCF for the MuJoCo viewer')
@@ -85,7 +129,7 @@ def main(argv=None):
     view.add_argument('--config')
     a=p.parse_args(argv)
     try:
-        if a.command=='replay':replay(a.result,not a.headless,a.gif,a.physics,a.speed);return 0
+        if a.command=='replay':replay(a.result,not a.headless,a.gif,a.physics,a.speed,not a.no_controls);return 0
         from .world import World
         cfg=load_config(getattr(a,'config',None))
         with World(cfg,gui=getattr(a,'gui',False) or a.command=='view',

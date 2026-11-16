@@ -46,6 +46,21 @@ bash scripts/setup.sh
 .venv/bin/python -m viewpoint_sim replay --result outputs/demo --physics  # 位置伺服，约 13 秒
 ```
 
+### 回放控制窗口
+
+`replay`（带窗口时）会另开一个小窗口，提供：
+
+| 控件 | 作用 |
+|---|---|
+| 速度滑块 | `0.25×` ~ `8×`，**拖动即时生效**，正在跑的动作当场变速 |
+| 重放 (R) | 从头再播一遍；播完后停在窗口里等待，随时可重放 |
+| 暂停 (空格) | 冻结在当前位置（两种执行模式都支持） |
+| 退出 (Esc) | 结束回放并关闭两个窗口 |
+
+之所以是「另一个窗口」而不是画在 MuJoCo 窗口里：MuJoCo 的 `viewer.Handle` 只暴露 `cam`/`opt`/`user_scn`/`set_texts`，**没有任何按钮或滑块的 Python 接口**，除非自己写一个 C 查看器插件。两个窗口由同一线程驱动（Tk 用 `root.update()` 在回放循环里泵事件，不另起线程），所以 GLFW 和 Tcl 不会互相干扰。
+
+无显示器或系统缺少 Tk 时，控件窗口自动跳过并在 stderr 说明，回放按 `--speed` 继续。想强制关掉它用 `--no-controls`。
+
 安装脚本默认创建 Python 3.12 环境，并使用清华 PyPI 镜像与 120 秒读取超时。可以自行指定其他源：
 
 ```bash

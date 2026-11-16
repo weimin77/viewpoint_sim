@@ -22,6 +22,11 @@ def stats_template(mode):
     return {'mode': mode, 'physics_steps': 0, 'max_joint_speed_rad_s': 0.0}
 
 
+def _cadence(value):
+    """``sync_every`` may be a constant or a callable, so speed can change live."""
+    return int(round(value() if callable(value) else value))
+
+
 def edge_duration(delta, motion):
     """Simulated seconds a joint-space edge of span ``delta`` should take.
 
@@ -46,7 +51,6 @@ def kinematic(path, motion, *, set_q, collide, on_frame=None, sync_every=1):
     """
     stats = stats_template(motion['execution_mode'])
     resolution = motion['edge_resolution_rad']
-    every = max(1, int(sync_every))
     frame = 0
     for start, end in zip(path, path[1:]):
         for q in interpolate(np.array(start), np.array(end), resolution):
@@ -54,7 +58,7 @@ def kinematic(path, motion, *, set_q, collide, on_frame=None, sync_every=1):
             reason = collide()
             if reason:
                 raise RuntimeError('Execution aborted: ' + reason)
-            if on_frame is not None and frame % every == 0:
+            if on_frame is not None and frame % max(1, _cadence(sync_every)) == 0:
                 on_frame()
             frame += 1
     set_q(path[-1])
@@ -81,7 +85,7 @@ class Servo:
         self.current_q = current_q
         self.collide = collide
         self.on_frame = on_frame
-        self.sync_every = max(1, int(sync_every))
+        self.sync_every = sync_every
         self.stats = stats_template(motion['execution_mode'])
 
     def _joint_speed(self):
@@ -99,7 +103,7 @@ class Servo:
         if reason:
             raise RuntimeError('Physics execution aborted: ' + reason)
         if (self.on_frame is not None
-                and self.stats['physics_steps'] % self.sync_every == 0):
+                and self.stats['physics_steps'] % max(1, _cadence(self.sync_every)) == 0):
             self.on_frame()
 
     def follow(self, path):

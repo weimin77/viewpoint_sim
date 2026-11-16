@@ -52,7 +52,8 @@
 | `planner.py` | 147 | 编排 | 主流程：采样 → 门禁 → 执行 → 落盘 | `feasibility_check` `execute_path` `run` |
 | `comparison.py` | 31 | 编排 | 同 XY 的平移 vs 重 Look-at 对照 | `compare_heights` |
 | `report.py` | 35 | 编排 | 生成零依赖离线 HTML | `make_report` |
-| `cli.py` | 86 | 编排 | 子命令 `run` / `replay` / `check` / `export-model` / `view` | `main` `replay` |
+| `cli.py` | 158 | 编排 | 子命令 `run` / `replay` / `check` / `export-model` / `view` | `main` `replay` |
+| `playback.py` | 261 | 编排 | 回放控制状态 + Tk 控件窗口 | `Playback` `Controls` `Abort` `FRAME_DT` |
 
 `__init__.py` 里有一行关键的环境准备：Linux 无 `DISPLAY` 时自动 `MUJOCO_GL=egl`，这是无桌面环境能跑渲染的前提。
 
@@ -68,6 +69,8 @@ graph TD
     cli --> world[world]
     cli --> planner[planner]
     cli --> motion[motion]
+    cli --> playback[playback]
+    cli --> execution[execution]
 
     planner --> acquisition[acquisition]
     planner --> feasibility[feasibility]
@@ -600,6 +603,19 @@ raise RuntimeError('Position servo did not reach the configured settling criteri
 
 需要强调的边界：**`edge_free` 是离散检查，不是 CCD**。理论上要满足 `步长 × 连杆包络半径 < 最小障碍厚度/2` 才不漏检。本工程的保守做法是 `edge_resolution_rad = 0.025`，并在 `replay` 时再独立复核一遍。
 
+### 8.3 回放控制窗口
+
+`viewpoint_sim/playback.py` 提供速度滑块与重放/暂停/退出。它**不是 MuJoCo 窗口内的控件**——`viewer.Handle` 只有 `cam`/`opt`/`user_scn`/`set_figures`/`set_texts`，没有任何按钮或滑块接口，除非自己写一个 C 查看器插件——所以是一个并排的小 Tk 窗口。
+
+两个关键决定：
+
+- **两个窗口同线程**。Tk 不在子线程跑 `mainloop()`，而是用 `root.update()` 在回放循环里泵事件；GLFW 与 Tcl 因此不共享任何状态，而循环本来就要睡 25 ms，正好当刷新间隔。
+- **速度逐帧读取**。`World.speed_source` 是一个回调（`run` 里就是常量 lambda），`execution._cadence` 允许 `sync_every` 是常量或回调。于是滑块在动作进行中改值也立刻生效，物理模式同样如此（`sync_every = 12×speed`，帧间隔固定 24 ms）。
+
+运动学预览走**虚拟时间**而不是固定抽帧：每帧把边内进度 `u` 推进 `FRAME_DT×speed/duration`。因此变速是「改变剩余距离的覆盖速度」，不会像重排固定采样那样跳一下。
+
+`Playback.pump()` 在没有 UI 时是空操作，`Controls` 创建失败时 `ok=False` 且不抛异常，所以 `--headless`、无 Tk、无显示三种情况都走同一条回放循环。
+
 ---
 
 ## 9. 传感与质量验收
@@ -711,6 +727,7 @@ sample_rng, ik_rng, path_rng, jitter_rng = [default_rng(s) for s in seeds]
 | 粗筛用球包围 | `collision.Checker` | `geom_rbound` 球间隙 ≥ margin 时精确距离必然 ≥ margin，故无漏检；但球比凸包大时会多做精确查询 |
 | 墙钟节流在 `World` | `world.execute` | `execution` 不 sleep，GUI 节流统一由 `on_frame` 负责，所以两条循环都必须在无 viewer 时才完全确定 |
 | 播放速度与仿真速度脱钩 | `cli.py --speed` | 默认 4× 只为好看动；`max_joint_speed_rad_s=0.45` 远低于真机的 2~3 rad/s，想缩短仿真时长要改这个（并换基线） |
+| 控件窗口是独立 Tk 窗口 | `playback.py` | MuJoCo 查看器无控件 API；两个窗口同线程，Tk 用 `update()` 泵事件 |
 | 运动学预览不积分动力学 | `cli.replay` | 与 `--physics` 同一时间表、同一视觉速度，但直接写 `qpos`；它证明路径与几何，不证明可达性 |
 | `model.geom_group` 被运行时改写 | `world.isolated_food_masks` | 有 `try/finally` 恢复，但若进程被杀会残留（仅影响当次进程） |
 | `renderer` 缓存不随分辨率释放 | `world.renderers` | 只按 `(w,h)` 缓存，`close()` 统一释放 |

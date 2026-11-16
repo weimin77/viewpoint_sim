@@ -12,8 +12,15 @@ test_oven_top_is_open (test_mujoco_workcell.MuJoCoWorldTests.test_oven_top_is_op
 test_position_servos_settle_using_physics_steps (test_mujoco_workcell.MuJoCoWorldTests.test_position_servos_settle_using_physics_steps) ... ok
 test_rgb_depth_and_segmentation_are_aligned (test_mujoco_workcell.MuJoCoWorldTests.test_rgb_depth_and_segmentation_are_aligned) ... ok
 test_safe_endpoints_do_not_prove_the_edge_safe (test_mujoco_workcell.PathTests.test_safe_endpoints_do_not_prove_the_edge_safe) ... ok
+test_progress_tracks_the_view_being_played (test_playback.PlaybackTests.test_progress_tracks_the_view_being_played) ... ok
+test_reset_clears_pause (test_playback.PlaybackTests.test_reset_clears_pause) ... ok
+test_reset_fires_once (test_playback.PlaybackTests.test_reset_fires_once) ... ok
+test_speed_changes_are_read_live (test_playback.PlaybackTests.test_speed_changes_are_read_live) ... ok
+test_speed_is_clamped_to_the_slider_range (test_playback.PlaybackTests.test_speed_is_clamped_to_the_slider_range) ... ok
+test_wait_while_paused_returns_immediately_when_not_paused (test_playback.PlaybackTests.test_wait_while_paused_returns_immediately_when_not_paused) ... ok
+test_wait_while_paused_returns_immediately_when_reset_is_pending (test_playback.PlaybackTests.test_wait_while_paused_returns_immediately_when_reset_is_pending) ... ok
 
 ----------------------------------------------------------------------
-Ran 14 tests in 1.666s
+Ran 21 tests in 1.702s
 
 OK

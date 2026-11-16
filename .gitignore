@@ -3,4 +3,4 @@ __pycache__/
 *.pyc
 build/
 *.egg-info/
-outputs/my_*/
+outputs/

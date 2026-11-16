@@ -23,6 +23,10 @@ class World:
         # Playback pacing multiplier. It only divides wall-clock sleeps; no
         # recorded number (steps, poses, timings) depends on it.
         self.speed=max(0.05,float(speed))
+        # Replay overrides these so the slider and the pause button work while
+        # the arm is already moving; `run` leaves them as they are.
+        self.speed_source=lambda:self.speed
+        self.frame_hook=None
         self.mount=mount_transform(cfg)
         self.kin=Kinematics(ROOT/cfg['robot']['urdf'],cfg['robot']['flange_link'],cfg['robot']['base_position_B_m'])
         self.xml=build_model_xml(cfg)
@@ -151,21 +155,22 @@ class World:
         motion=self.cfg['motion'];kinematic=motion['execution_mode']=='kinematic'
         dt=self.model.opt.timestep
         # Playback pacing lives here, not in the loop: only a live viewer needs
-        # wall time. The frame delay stays ~24 ms in physics mode (about 41 fps)
-        # and the frame STRIDE grows with `speed`, so the clip gets shorter
-        # instead of choppier, and `speed` never reaches the physics.
-        if kinematic:
-            frame_delay,stride=.015,self.speed
-        else:
-            frame_delay,stride=dt*12,12*self.speed
+        # wall time. The frame delay stays CONSTANT (24 ms in physics mode,
+        # 15 ms in the preview) and the frame STRIDE carries the multiplier, so
+        # speeding up shortens the clip instead of choppering it - and the
+        # multiplier is re-read every frame, so a slider can change it mid-run.
+        frame_delay=0.015 if kinematic else dt*12
+        base_stride=1 if kinematic else 12
+        def speed():return max(0.05,float(self.speed_source()))
         on_frame=None
         if self.viewer is not None:
             def on_frame():
+                if self.frame_hook is not None:self.frame_hook()
                 self.viewer.sync();time.sleep(frame_delay)
         return execution.execute(self.model,self.data,motion,path,set_q=self.set_q,
                                  current_q=lambda:self.q,dof_addresses=self.dadr,
                                  collide=self.collision_current,on_frame=on_frame,
-                                 sync_every=max(1,int(round(stride))))
+                                 sync_every=lambda:base_stride*speed())
 
     def export_scene(self,path):
         path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)

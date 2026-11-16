@@ -1,4 +1,10 @@
-"""MuJoCo model, metric rendering, collision queries, and position-servo motion."""
+"""MuJoCo workcell: model instantiation, metric rendering, mask isolation.
+
+Collision checking lives in ``collision`` and the execution loops in
+``execution``; this class wires them to one live ``MjModel``/``MjData`` pair and
+owns the renderer cache. Anything that needs to *move* the arm ends up here
+because only here is there a model to move.
+"""
 import os,time
 from pathlib import Path
 import numpy as np
@@ -8,6 +14,7 @@ from .config import ROOT,mount_transform
 from .kinematics import Kinematics
 from .model_builder import build_model_xml
 from .geometry import look_at
+from . import collision, execution
 
 
 class World:
@@ -30,21 +37,13 @@ class World:
         self.robot_geoms=[i for i in range(self.model.ngeom) if (self.model.geom(i).name or '').startswith('col_')]
         self.env_geoms=[i for i in range(self.model.ngeom) if (self.model.geom(i).name or '').startswith(('env_','food_'))]
         self.food_geoms=[i for i in self.env_geoms if int(self.model.geom_bodyid[i]) in self.food_ids]
-        # Use the same body exclusion matrix for distance queries and simulation.
-        import xml.etree.ElementTree as E
-        allowed=set()
-        for e in E.fromstring(self.xml).findall('contact/exclude'):
-            allowed.add(frozenset((self.model.body(e.get('body1')).id,self.model.body(e.get('body2')).id)))
-        self.pairs=[]
-        for k,a in enumerate(self.robot_geoms):
-            for b in self.robot_geoms[k+1:]:
-                ba,bb=int(self.model.geom_bodyid[a]),int(self.model.geom_bodyid[b])
-                if ba!=bb and frozenset((ba,bb)) not in allowed:self.pairs.append((a,b,'self_collision'))
-            for b in self.env_geoms:
-                if self.names[int(self.model.geom_bodyid[a])]=='base' and self.names[int(self.model.geom_bodyid[b])]=='table':continue
-                self.pairs.append((a,b,'environment_collision'))
-        self._pair_a=np.array([p[0] for p in self.pairs],dtype=int)
-        self._pair_b=np.array([p[1] for p in self.pairs],dtype=int)
+        # The pair list and the exclusion matrix both come from the generated
+        # XML, so an added obstacle joins the test set by being built.
+        self.checker=collision.Checker(self.model,self.data,
+            collision.geom_pairs(self.robot_geoms,self.env_geoms,
+                                 lambda geom:int(self.model.geom_bodyid[geom]),self.names,
+                                 collision.excluded_body_pairs(self.xml,lambda name:self.model.body(name).id)),
+            cfg['motion']['collision_margin_m'])
         self.renderers={}
         self.viewer=None
         self.set_q(cfg['robot']['home_q_rad'])
@@ -79,17 +78,9 @@ class World:
         return T
 
     def collision_current(self):
-        q=self.q;m=self.cfg['robot']['joint_limit_margin_rad']
-        if np.any(q<self.kin.lower+m-1e-8) or np.any(q>self.kin.upper-m+1e-8):return 'joint_limit'
-        margin=self.cfg['motion']['collision_margin_m']
-        a,b=self._pair_a,self._pair_b
-        broad=np.linalg.norm(self.data.geom_xpos[a]-self.data.geom_xpos[b],axis=1)-self.model.geom_rbound[a]-self.model.geom_rbound[b]
-        for index in np.flatnonzero(broad<margin):
-            g1,g2,kind=self.pairs[index]
-            distance=mujoco.mj_geomDistance(self.model,self.data,g1,g2,margin,None)
-            if distance<margin-1e-10:
-                return f'{kind}:{self.model.geom(g1).name}:{self.model.geom(g2).name}'
-        return None
+        reason=collision.joint_limit_violation(self.q,self.kin.lower,self.kin.upper,
+                                               self.cfg['robot']['joint_limit_margin_rad'])
+        return reason or self.checker.violation()
 
     def collision(self,q):
         self.set_q(q)
@@ -154,42 +145,16 @@ class World:
         if self.viewer is not None:self.viewer.sync()
 
     def execute(self,path):
-        from .motion import interpolate
-        cfg=self.cfg['motion'];stats={'mode':cfg['execution_mode'],'physics_steps':0,'max_joint_speed_rad_s':0.}
-        if cfg['execution_mode']=='kinematic':
-            for a,b in zip(path,path[1:]):
-                for q in interpolate(np.array(a),np.array(b),cfg['edge_resolution_rad']):
-                    reason=self.collision(q)
-                    if reason:raise RuntimeError('Execution aborted: '+reason)
-                    if self.viewer is not None:self.viewer.sync();time.sleep(.015)
-            self.set_q(path[-1]);return stats
-        dt=self.model.opt.timestep
-        def step(target):
-            self.data.ctrl[:]=target
-            mujoco.mj_step(self.model,self.data)
-            # mj_step integrates qpos after evaluating kinematics. Refresh the
-            # derived poses before checking collisions or recording a frame.
-            mujoco.mj_forward(self.model,self.data)
-            stats['physics_steps']+=1
-            stats['max_joint_speed_rad_s']=max(stats['max_joint_speed_rad_s'],float(np.max(np.abs(self.data.qvel[self.dadr]))))
-            reason=self.collision_current()
-            if reason:raise RuntimeError('Physics execution aborted: '+reason)
-            if self.viewer is not None and stats['physics_steps']%12==0:self.viewer.sync();time.sleep(dt*12)
-        for a,b in zip(path,path[1:]):
-            a,b=np.array(a),np.array(b);delta=np.max(np.abs(b-a))
-            duration=max(1.5*delta/cfg['max_joint_speed_rad_s'],np.sqrt(6*delta/cfg['max_joint_accel_rad_s2']),dt)
-            for u in np.linspace(0,1,max(2,int(np.ceil(duration/dt))+1)):
-                step(a+(b-a)*(3*u*u-2*u*u*u))
-        goal=np.array(path[-1]);stable=0;required=max(1,int(cfg['settle_hold_s']/dt))
-        for _ in range(int(cfg['settle_timeout_s']/dt)):
-            step(goal)
-            if np.max(np.abs(self.q-goal))<cfg['settle_joint_error_rad'] and np.max(np.abs(self.data.qvel[self.dadr]))<cfg['settle_velocity_rad_s']:stable+=1
-            else:stable=0
-            if stable>=required:
-                stats['arrived_joint_error_rad']=float(np.max(np.abs(self.q-goal)))
-                stats['arrived_joint_velocity_rad_s']=float(np.max(np.abs(self.data.qvel[self.dadr])))
-                return stats
-        raise RuntimeError('Position servo did not reach the configured settling criterion')
+        motion=self.cfg['motion'];kinematic=motion['execution_mode']=='kinematic'
+        settle_frame=self.model.opt.timestep*12
+        on_frame=None
+        if self.viewer is not None:
+            # Pacing lives here, not in the loop: only a live viewer needs wall time.
+            def on_frame():
+                self.viewer.sync();time.sleep(.015 if kinematic else settle_frame)
+        return execution.execute(self.model,self.data,motion,path,set_q=self.set_q,
+                                 current_q=lambda:self.q,dof_addresses=self.dadr,
+                                 collide=self.collision_current,on_frame=on_frame)
 
     def export_scene(self,path):
         path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)

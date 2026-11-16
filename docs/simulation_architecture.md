@@ -45,7 +45,9 @@
 | `config.py` | 47 | 纯 | 装载 + 校验、安装外参 | `ROOT` `load_config` `validate_config` `mount_transform` `clone` |
 | `motion.py` | 78 | 纯 | 关节插值、边/路径检查、RRT-Connect | `interpolate` `edge_free` `path_free` `plan` |
 | **`model_builder.py`** | **145** | 适配 | **URDF + 配置 → MJCF 字符串** | `build_model_xml` `numbers` `quat` `origin` |
-| **`world.py`** | **205** | 适配 | **MuJoCo 封装：渲染、碰撞、伺服** | `World` `._camera` `.render` `.collision` `.execute` `.isolated_food_masks` `.export_scene` |
+| **`collision.py`** | **111** | 适配 | **待检对构造（纯）+ 距离查询** | `excluded_body_pairs` `geom_pairs` `joint_limit_violation` `Checker` |
+| **`execution.py`** | **134** | 适配 | **两条执行循环与稳定判据** | `stats_template` `kinematic` `Servo` `.follow` `.settle` `execute` |
+| **`world.py`** | **170** | 适配 | **MuJoCo 实例：渲染、掩码隔离、装配** | `World` `._camera` `.render` `.isolated_food_masks` `.export_scene` |
 | `acquisition.py` | 60 | 编排 | 渲染 → 调 `quality.assess` → 落盘 | `inspect_capture` `save_capture` |
 | `planner.py` | 147 | 编排 | 主流程：采样 → 门禁 → 执行 → 落盘 | `feasibility_check` `execute_path` `run` |
 | `comparison.py` | 31 | 编排 | 同 XY 的平移 vs 重 Look-at 对照 | `compare_heights` |
@@ -55,6 +57,8 @@
 `__init__.py` 里有一行关键的环境准备：Linux 无 `DISPLAY` 时自动 `MUJOCO_GL=egl`，这是无桌面环境能跑渲染的前提。
 
 分层的意义：`pose_generation` / `feasibility` / `diversity` / `quality` / `run_statistics` 五个纯模块只吃配置和已算好的数据，`examples/xy_sampling/` 因此可以直接复用前三个而不加载 MuJoCo。`planner.run()` 只负责循环和调用，不再做投影、多边形裁剪、夹角计算或汇总拼装。
+
+适配层同样是三个模块而不是一个：`model_builder` 生成字符串、`collision` 决定查哪些对、`execution` 决定怎么动；`world.py` 只剩"把这三者接到同一对 `MjModel`/`MjData` 上"以及渲染器缓存。这样碰撞对构造（`geom_pairs`）和执行循环都能在没有 `World` 的情况下单测。
 
 ### 2.2 依赖方向
 
@@ -79,6 +83,7 @@ graph TD
     feasibility --> geometry
     pose_generation --> geometry
     diversity --> geometry
+    run_statistics --> diversity
     quality --> config
     comparison --> feasibility
     comparison --> geometry
@@ -86,7 +91,10 @@ graph TD
     world --> config
     world --> kinematics[kinematics]
     world --> model_builder[model_builder]
+    world --> collision[collision]
+    world --> execution[execution]
     world --> geometry
+    execution --> motion
     model_builder --> config
     model_builder --> geometry
     kinematics --> geometry
@@ -95,10 +103,11 @@ graph TD
 
 要点：
 
-- **MuJoCo 只在两处被 import**：`model_builder.py`（生成 XML 时不需要）实际只用到 `xml.etree`，真正的 `import mujoco` 只出现在 `world.py` 和 `cli.py` 的 `view` 分支；
-- 四个纯算法模块（`pose_generation` / `feasibility` / `diversity` / `quality`）只依赖 `geometry` 与 `config`，所以 `examples/xy_sampling/` 能复用它而不加载 MuJoCo；
+- **`import mujoco` 出现在四个模块**：`world.py`（实例、渲染）、`collision.py`（距离查询）、`execution.py`（`mj_step`/`mj_forward`），以及 `cli.py` 的 `view` 分支。`model_builder.py` 反而不 import 它——只生成字符串，用 `xml.etree` 就够；
+- 五个纯算法模块（`pose_generation` / `feasibility` / `diversity` / `quality` / `run_statistics`）只依赖 `geometry` 与 `config`，所以 `examples/xy_sampling/` 能复用它而不加载 MuJoCo；
 - `run_statistics` 只依赖 `diversity` 的 `min_pairwise_angle_deg`，不碰 `Counter`、`datetime` 或文件系统：`summary.json` 的每个数字都能在无仿真器的情况下单测；
 - 模块名刻意叫 `run_statistics` 而不是 `statistics`，避免遮蔽标准库同名模块；
+- `collision` 与 `execution` 互不依赖，都只吃 `model`/`data`/配置和几个回调，因此 `world` 是唯一把三者串起来的地方，也是最薄的一层；
 - `config.py` 的 `ROOT` 做了兜底：打包安装后若 `assets/` 不在上一级，则退回当前目录；
 - `planner` 与 `comparison` 之间**已无循环**：`comparison` 只依赖 `feasibility` 和 `geometry`，因此两者的 import 都在模块顶层，不再需要函数内延迟导入。
 
@@ -159,7 +168,7 @@ self.data  = mujoco.MjData(self.model)
 | `robot_geoms` | 名字以 `col_` 开头的 geom（碰撞用） |
 | `env_geoms` | 名字以 `env_` 或 `food_` 开头的 geom |
 | `food_geoms` | `env_geoms` 中属于食材 body 的部分 |
-| `pairs` | 预计算的待检查 geom 对（含类型标签） |
+| `checker` | `collision.Checker`：待检查 geom 对（含类型标签）+ 距离查询 |
 | `renderers` | `mujoco.Renderer` 缓存，按 `(w,h)` 键 |
 
 ### 3.1 MJCF 里的命名约定
@@ -478,19 +487,24 @@ fx = fy = 800, 960×640
 
 ### 7.1 三阶段过滤
 
+限位检查是纯 NumPy，待在 `collision.joint_limit_violation`；几何部分包在 `collision.Checker` 里，持有 `model`/`data` 的引用（不是拷贝——调用方通过 `set_q`/`mj_step` 改状态，下一次查询必须看到新状态）。
+
 ```python
 def collision_current(self):
-    # ① 关节限位（软裕量）
-    if np.any(q < lower + m) or np.any(q > upper - m): return 'joint_limit'
+    reason = collision.joint_limit_violation(self.q, self.kin.lower, self.kin.upper,
+                                             cfg['robot']['joint_limit_margin_rad'])
+    return reason or self.checker.violation()      # ① 不通过就不再做几何查询
+```
 
-    margin = cfg['motion']['collision_margin_m']    # 2 mm
+```python
+def violation(self):
     # ② 球包围盒粗筛，向量化一次算完
-    broad = norm(geom_xpos[a] - geom_xpos[b]) - geom_rbound[a] - geom_rbound[b]
-    for index in np.flatnonzero(broad < margin):
+    apart = norm(geom_xpos[a] - geom_xpos[b]) - geom_rbound[a] - geom_rbound[b]
+    for index in np.flatnonzero(apart < self.margin_m):
         # ③ 精确有符号距离
         g1, g2, kind = self.pairs[index]
-        distance = mujoco.mj_geomDistance(model, data, g1, g2, margin, None)
-        if distance < margin - 1e-10:
+        distance = mujoco.mj_geomDistance(model, data, g1, g2, self.margin_m, None)
+        if distance < self.margin_m - 1e-10:
             return f'{kind}:{geom_name(g1)}:{geom_name(g2)}'
     return None
 ```
@@ -503,40 +517,39 @@ def collision_current(self):
 
 **为什么不用 `<geom margin>` + `data.contact`**：`margin` 是两个 geom 的"膨胀"，两个都设就会叠加，接触判定会悄悄变严 2 倍；而 `mj_geomDistance` 是**显式逐对查询**，语义只有"几何距离小于 2 mm 算碰撞"，没有隐藏的合成规则。代价是每对一次调用，所以先用 ② 粗筛。
 
+**为什么两个执行模式的碰撞回调都是零参**：`execution` 拿到的是 `collide` 而不是 `collide(q)`。每个循环先把自己移动到它关心的状态（`set_q` 或 `mj_step`+`mj_forward`），再对**这个**状态发问，于是谁都不可能查到一个和自己正在评估的不一样的状态。
+
 ### 7.2 待检查对的构造
 
+这一步在 `collision.geom_pairs` 里，**不依赖任何 MuJoCo 类型**：`body_of` 与 `names` 都由调用方传入的映射代替。
+
 ```python
-for k, a in enumerate(robot_geoms):
-    for b in robot_geoms[k+1:]:                       # 自碰撞
-        if geom_bodyid[a] != geom_bodyid[b] and (ba,bb) not in allowed:
+for index, a in enumerate(robot_geoms):
+    for b in robot_geoms[index+1:]:                   # 自碰撞
+        if body_of(a) != body_of(b) and (ba,bb) not in excluded:
             pairs.append((a, b, 'self_collision'))
     for b in env_geoms:                               # 环境碰撞
-        if body(a) == 'base' and body(b) == 'table': continue   # 底座装在工作台上
+        if names[body_of(a)] == 'base' and names[body_of(b)] == 'table': continue   # 底座装在工作台上
         pairs.append((a, b, 'environment_collision'))
 ```
 
 三个过滤条件：
 
 1. **同一 body 内不自检**：凸包网格同体的两个 geom 天然"相交"，查了必然误报；
-2. **`allowed` 来自同一份 `<contact><exclude>`**：仿真与查询用同一套排除关系；
+2. **`excluded` 来自同一份 `<contact><exclude>`**：仿真与查询用同一套排除关系，且都从生成的那份 XML 文本解析，不读模型的二手副本；
 3. **`base` ↔ `table` 豁免**：机器人底座固定在工作台上，这是装配接触。
 
+**顺序是确定的**：机器人 geom 按模型顺序，每个先对**它之后**的机器人 geom、再对环境 geom，所以第一处报出的违规是可复现的——否则粗筛里 `flatnonzero` 的顺序一旦变化，同样的姿态会报出不同的 geom 对名。
+
 **与 PyBullet 版的差别**：那边需要手写"法兰平面内 12 mm 圆盘"的局部豁免（因为腕部网格与支架必然接触）。这里把 `link6↔housing`、`link6↔bracket`、`housing↔bracket` 三对整体排除，因为夹具是刚性装配、不存在相对运动，整对豁免是安全的。
-
-### 7.3 已知局限
-
-| 局限 | 影响 |
-|---|---|
-| **凸包近似** | `col_*` 用网格凸包。细长凹形（如腕部凹陷、层架间隙）在碰撞上被填实，偏保守 |
-| **离散检测** | `edge_free` 按关节角步长插值，没有连续碰撞检测（CCD），见 §8.2 |
-| **球包围盒粗筛** | `geom_rbound` 是外接球，对细长连杆偏大 → 粗筛只影响性能，不影响正确性 |
-| **球 vs 凸包** | 食材是 box/sphere，用 MuJoCo 原生解析碰撞，精确 |
 
 ---
 
 ## 8. 运动模型
 
 ### 8.1 两种执行方式
+
+两条循环都在 `execution.py`，`World.execute` 只是把 `model`/`data` 和三个回调（`set_q`、`current_q`、`collide`）交给它。模块不 import `World`，也不 sleep——墙钟节流是 `world.execute` 里 `on_frame` 的事，因为只有带 GUI 时才需要。
 
 `cfg.motion.execution_mode` 决定走哪条：
 
@@ -688,7 +701,9 @@ sample_rng, ik_rng, path_rng, jitter_rng = [default_rng(s) for s in seeds]
 | 离散碰撞 | `motion.edge_free` | 非 CCD，无隧穿量化界 |
 | 凸包碰撞 | `col_*` geom | 凹形结构被填实，偏保守 |
 | `ROI` 与 `scene` 双重描述 | `configs/*.json` | 无交叉校验（仅校验食材落在 ROI 内） |
-| 确定性边界 | `World.execute` | 采样/IK/路径逐位可复现；到位与像素允许极小量差 |
+| 确定性边界 | `execution.py` | 采样/IK/路径逐位可复现；到位与像素允许极小量差 |
+| 粗筛用球包围 | `collision.Checker` | `geom_rbound` 球间隙 ≥ margin 时精确距离必然 ≥ margin，故无漏检；但球比凸包大时会多做精确查询 |
+| 墙钟节流在 `World` | `world.execute` | `execution` 不 sleep，GUI 节流统一由 `on_frame` 负责，所以两条循环都必须在无 viewer 时才完全确定 |
 | `model.geom_group` 被运行时改写 | `world.isolated_food_masks` | 有 `try/finally` 恢复，但若进程被杀会残留（仅影响当次进程） |
 | `renderer` 缓存不随分辨率释放 | `world.renderers` | 只按 `(w,h)` 缓存，`close()` 统一释放 |
 | 选择策略缺失 | `planner.run` | 仍是"先通过先接受"；`summary.view_ids_ranked_by_tray_ratio` 只做事后排序，不参与选择 |

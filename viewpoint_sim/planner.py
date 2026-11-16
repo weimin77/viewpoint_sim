@@ -7,7 +7,8 @@ import numpy as np
 from PIL import Image
 from scipy.spatial.transform import Rotation
 from .acquisition import inspect_capture, save_capture
-from .geometry import box_vertices, look_at, inv, project, image_contains, tray_ratio, angle_deg
+from .geometry import box_vertices, inv, project, image_contains, tray_ratio, angle_deg
+from .pose_generation import candidate_pose
 from .motion import plan, interpolate
 
 
@@ -62,17 +63,18 @@ def run(world, output):
     if initial_collision:
         raise ValueError("Home configuration is invalid: "+initial_collision)
     accepted, all_axes, heights = [], [], []
-    center = (np.array(cfg["roi"]["food_min_B"])+cfg["roi"]["food_max_B"])/2
     with (output/"candidates.jsonl").open("w",encoding="utf-8") as log:
         for height_index,h in enumerate(s["heights_above_tray_m"]):
             failures, count, attempts, axes = Counter(),0,0,[]
             while count < s["target_per_height"] and attempts < s["max_attempts_per_height"]:
                 attempts += 1
                 candidate_id = f"h{height_index:02d}_c{attempts:04d}"
-                jitter = float(jitter_rng.uniform(-s["z_jitter_m"],s["z_jitter_m"])) if s["z_jitter_m"] else 0.0
-                actual_height = h+jitter
-                eye = [sample_rng.uniform(*s["x_B_m"]),sample_rng.uniform(*s["y_B_m"]),cfg["roi"]["tray_z_B_m"]+actual_height]
-                target = look_at(eye,center,s["reference_up_B"])
+                # Steps 1-2 live in pose_generation: planar sample + height +
+                # jitter, then Look-at at the ROI centre. Same draw order as
+                # before, so existing seeds still reproduce.
+                eye, target, actual_height, jitter = candidate_pose(
+                    cfg, height_index, sample_rng, jitter_rng)
+                eye = eye.tolist()
                 state = dict(id=candidate_id,base_height_above_tray_m=h,height_above_tray_m=actual_height,z_jitter_m=jitter,eye_B_m=eye)
                 geometry, reason = geometry_check(cfg,target,height_index)
                 capture, solution, path, ik_quality = None,None,None,None

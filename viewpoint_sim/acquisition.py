@@ -1,45 +1,31 @@
-"""Synthetic aligned RGB-D, visible-instance labels, and per-object visibility QA."""
+"""Capture rendering and dataset export.
+
+``inspect_capture`` renders one pose and delegates the acceptance verdict to
+``quality.assess``; ``save_capture`` writes the dataset files and the metadata
+record. The QA thresholds themselves live in ``quality`` so they can be tested
+without a simulator.
+"""
 from pathlib import Path
 import json
 import numpy as np
 from PIL import Image, ImageDraw
 from .geometry import crop_box, cropped_intrinsics, tray_ratio
+from .quality import assess
 
 
 def inspect_capture(world, T_BC):
+    """Render one capture, then hand the arrays to the quality assessment.
+
+    Rendering is the only engine-dependent part; ``quality.assess`` is a pure
+    function of the arrays, so the acceptance thresholds can be tested without a
+    simulator.
+    """
     rgb, z, body = world.render(T_BC)
     reference = world.isolated_food_masks(T_BC)
-    lo, hi = world.cfg["camera"]["depth_range_m"]
-    depth_valid = (z >= lo) & (z <= hi) & (body >= 0)
-    labels = np.zeros(body.shape, dtype=np.uint16)
-    metrics, reasons = [], []
-    qc = world.cfg["quality"]
-    for instance, (bid, ref) in enumerate(zip(world.food_ids, reference), 1):
-        mask = body == bid
-        labels[mask] = instance
-        nref, count = int(ref.sum()), int(mask.sum())
-        visible = count/max(1,nref)
-        good_depth = float(depth_valid[mask].mean()) if count else 0.
-        ys,xs = np.nonzero(mask)
-        bbox = [int(xs.min()),int(ys.min()),int(xs.max()+1),int(ys.max()+1)] if count else [0]*4
-        side = min(bbox[2]-bbox[0],bbox[3]-bbox[1])
-        cut = bool(count and (mask[0].any() or mask[-1].any() or mask[:,0].any() or mask[:,-1].any()))
-        metrics.append(dict(instance_id=instance,name=world.names[bid],reference_pixels=nref,
-                            visible_pixels=count,visible_fraction=visible,
-                            valid_depth_fraction=good_depth,bbox_xyxy=bbox,min_bbox_side_px=side))
-        if qc['visibility_mode']=='enforce' and visible < qc["min_visible_fraction_per_food"]:
-            reasons.append("occlusion")
-        if count < qc["min_food_pixels"] or side < qc["min_food_bbox_side_px"]:
-            reasons.append("insufficient_food_pixels")
-        if good_depth < qc["min_valid_depth_fraction"]:
-            reasons.append("invalid_depth")
-        if cut:
-            reasons.append("food_cut_by_image_border")
-    # Zero represents invalid samples; valid depth stores optical Z in millimeters.
-    depth_mm = np.where(depth_valid, np.rint(z*1000),0).astype(np.uint16)
-    priority={"occlusion":0,"food_cut_by_image_border":1,"invalid_depth":2,"insufficient_food_pixels":3}
-    return {"rgb":rgb, "z":z.astype(np.float32), "depth_mm":depth_mm,
-            "labels":labels,"metrics":metrics,"failures":sorted(set(reasons),key=priority.get)}
+    report = assess(z, body, reference, world.food_ids, world.names, world.cfg)
+    return {"rgb": rgb, "z": z.astype(np.float32),
+            "depth_mm": report["depth_mm"], "labels": report["labels"],
+            "metrics": report["metrics"], "failures": report["failures"]}
 
 
 def save_capture(folder, capture, record, geometry, cfg):

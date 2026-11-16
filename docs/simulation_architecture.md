@@ -31,21 +31,29 @@
 
 ### 2.1 模块清单
 
-| 模块 | 行数 | 职责 | 关键符号 |
-|---|---:|---|---|
-| `geometry.py` | 133 | 变换、投影、多边形、裁剪 | `transform` `inv` `apply` `box_vertices` `look_at` `project` `image_contains` `clip_polygon` `tray_ratio` `crop_box` `cropped_intrinsics` |
-| `kinematics.py` | 86 | URDF 解析、FK、解析雅可比、有界多初值 IK | `Kinematics` `.fk()` `.solve()` |
-| `config.py` | 47 | 装载 + 校验、安装外参 | `ROOT` `load_config` `validate_config` `mount_transform` `clone` |
-| **`model_builder.py`** | **145** | **URDF + 配置 → MJCF 字符串** | `build_model_xml` `numbers` `quat` `origin` |
-| **`world.py`** | **205** | **MuJoCo 封装：渲染、碰撞、伺服** | `World` `._camera` `.render` `.collision` `.execute` `.isolated_food_masks` `.export_scene` |
-| `motion.py` | 78 | 关节插值、边/路径检查、RRT-Connect | `interpolate` `edge_free` `path_free` `plan` |
-| `acquisition.py` | 80 | 采集、质量验收、落盘 | `inspect_capture` `save_capture` |
-| `planner.py` | 185 | 主流程：采样 → 门禁 → 执行 → 落盘 | `geometry_check` `execute_path` `run` |
-| `comparison.py` | 31 | 同 XY 的平移 vs 重 Look-at 对照 | `compare_heights` |
-| `report.py` | 35 | 生成零依赖离线 HTML | `make_report` |
-| `cli.py` | 86 | 子命令 `run` / `replay` / `check` / `export-model` / `view` | `main` `replay` |
+模块分三层：**纯算法**（无 MuJoCo，可用数组直接单测）、**引擎适配**、**编排与 I/O**。
+
+| 模块 | 行数 | 层 | 职责 | 关键符号 |
+|---|---:|---|---|---|
+| `geometry.py` | 133 | 纯 | 变换、投影、多边形、裁剪 | `transform` `inv` `apply` `box_vertices` `look_at` `project` `image_contains` `clip_polygon` `tray_ratio` `crop_box` `cropped_intrinsics` |
+| `pose_generation.py` | 115 | 纯 | 平面采样 + 高度 + Z 扰动；Look-at 朝向 | `roi_center` `sample_plane_position` `sample_z_perturbation` `camera_position` `look_at_pose` `candidate_pose` |
+| `feasibility.py` | 140 | 纯 | 六道几何门 | `check` `check_detailed` `padded_food_corners` `image_margin_px` `tray_threshold` |
+| `diversity.py` | 63 | 纯 | 光轴去重与最小夹角统计 | `comparison_axes` `is_duplicate` `duplicate_reason` `min_pairwise_angle_deg` |
+| `quality.py` | 128 | 纯 | 图像验收：可见率、深度有效率、构图 | `assess` `depth_valid_mask` `instance_labels` `food_metric` `food_failures` `FOOD_FAILURE_PRIORITY` |
+| `kinematics.py` | 86 | 纯 | URDF 解析、FK、解析雅可比、有界多初值 IK | `Kinematics` `.fk()` `.solve()` |
+| `config.py` | 47 | 纯 | 装载 + 校验、安装外参 | `ROOT` `load_config` `validate_config` `mount_transform` `clone` |
+| `motion.py` | 78 | 纯 | 关节插值、边/路径检查、RRT-Connect | `interpolate` `edge_free` `path_free` `plan` |
+| **`model_builder.py`** | **145** | 适配 | **URDF + 配置 → MJCF 字符串** | `build_model_xml` `numbers` `quat` `origin` |
+| **`world.py`** | **205** | 适配 | **MuJoCo 封装：渲染、碰撞、伺服** | `World` `._camera` `.render` `.collision` `.execute` `.isolated_food_masks` `.export_scene` |
+| `acquisition.py` | 60 | 编排 | 渲染 → 调 `quality.assess` → 落盘 | `inspect_capture` `save_capture` |
+| `planner.py` | 157 | 编排 | 主流程：采样 → 门禁 → 执行 → 落盘 | `feasibility_check` `execute_path` `run` |
+| `comparison.py` | 31 | 编排 | 同 XY 的平移 vs 重 Look-at 对照 | `compare_heights` |
+| `report.py` | 35 | 编排 | 生成零依赖离线 HTML | `make_report` |
+| `cli.py` | 86 | 编排 | 子命令 `run` / `replay` / `check` / `export-model` / `view` | `main` `replay` |
 
 `__init__.py` 里有一行关键的环境准备：Linux 无 `DISPLAY` 时自动 `MUJOCO_GL=egl`，这是无桌面环境能跑渲染的前提。
+
+分层的意义：`pose_generation` / `feasibility` / `diversity` / `quality` 四个模块只吃配置和数组，`examples/xy_sampling/` 因此可以直接复用前三个而不加载 MuJoCo。`planner.run()` 只负责循环和调用，不再做投影、多边形裁剪或夹角计算。
 
 ### 2.2 依赖方向
 
@@ -57,11 +65,22 @@ graph TD
     cli --> motion[motion]
 
     planner --> acquisition[acquisition]
-    planner --> geometry[geometry]
+    planner --> feasibility[feasibility]
+    planner --> diversity[diversity]
+    planner --> pose_generation[pose_generation]
     planner --> motion
-    planner -.运行时导入.-> comparison[comparison] --> planner
+    planner --> comparison[comparison]
+    planner --> report[report]
 
-    acquisition --> geometry
+    acquisition --> quality[quality]
+    acquisition --> geometry[geometry]
+    feasibility --> geometry
+    pose_generation --> geometry
+    diversity --> geometry
+    quality --> config
+    comparison --> feasibility
+    comparison --> geometry
+
     world --> config
     world --> kinematics[kinematics]
     world --> model_builder[model_builder]
@@ -69,14 +88,15 @@ graph TD
     model_builder --> config
     model_builder --> geometry
     kinematics --> geometry
-    report[report] --> config
+    report --> config
 ```
 
 要点：
 
 - **MuJoCo 只在两处被 import**：`model_builder.py`（生成 XML 时不需要）实际只用到 `xml.etree`，真正的 `import mujoco` 只出现在 `world.py` 和 `cli.py` 的 `view` 分支；
+- 四个纯算法模块（`pose_generation` / `feasibility` / `diversity` / `quality`）只依赖 `geometry` 与 `config`，所以 `examples/xy_sampling/` 能复用它而不加载 MuJoCo；
 - `config.py` 的 `ROOT` 做了兜底：打包安装后若 `assets/` 不在上一级，则退回当前目录；
-- `planner` ↔ `comparison` 双向引用，用函数内延迟导入打破循环。
+- `planner` 与 `comparison` 之间**已无循环**：`comparison` 只依赖 `feasibility` 和 `geometry`，因此两者的 import 都在模块顶层，不再需要函数内延迟导入。
 
 ### 2.3 `run` 的调用链
 
@@ -95,12 +115,14 @@ sequenceDiagram
     CLI->>W: World(cfg) 编译 MJCF
     CLI->>P: run(world, output)
     loop 每个高度 × 每个候选
-        P->>P: look_at → geometry_check()
+        P->>P: pose_generation.candidate_pose()  采样 + Look-at
+        P->>P: feasibility.check()               六道几何门
+        P->>P: diversity.duplicate_reason()      光轴去重
         P->>K: solve(T_BF, seed)
         P->>W: collision(q) → mj_geomDistance
         P->>M: plan(start, goal)
         P->>W: set_q(q) / camera_pose()
-        P->>A: inspect_capture()
+        P->>A: inspect_capture() → quality.assess()
         P->>W: execute(path) 位置伺服
         P->>R: make_report()
     end
@@ -559,23 +581,18 @@ raise RuntimeError('Position servo did not reach the configured settling criteri
 
 ## 9. 传感与质量验收
 
-`acquisition.inspect_capture()` 一次渲染产出四样东西：RGB、光学 Z、实例标签、质量指标。
+`acquisition.inspect_capture()` 只做两件事：渲染，然后把数组交给 `quality.assess()`。渲染是唯一依赖引擎的部分；验收逻辑是纯函数，可以用手搭的数组单测（不需要 MuJoCo）。
+
+`quality.assess(z, body, reference, food_ids, names, cfg)` 一次产出实例标签、毫米深度图、每食材指标与失败原因。
 
 | 指标 | 定义 | 阈值键 |
 |---|---|---|
 | `visible_fraction` | 实占像素 / 隔离轮廓像素 | `min_visible_fraction_per_food`（`visibility_mode` 决定是否拦） |
 | `valid_depth_fraction` | 食材像素中落在 `depth_range_m` 内的比例 | `min_valid_depth_fraction` |
 | `visible_pixels` / `min_bbox_side_px` | 像素数与最小包围盒边 | `min_food_pixels`、`min_food_bbox_side_px` |
-| `cut` | 是否触到图像四边 | — |
+| 触边 | 是否触到图像四边 | — |
 
-失败原因按优先级排序：`occlusion` < `food_cut_by_image_border` < `invalid_depth` < `insufficient_food_pixels`，保证归因稳定（不受 `set` 迭代顺序影响）。
-
-落盘约定：
-
-- `depth_mm.png`（uint16，0 表示无效）+ `depth_z_m.npy`（float32 原始米值，未做量程掩膜）；
-- `instance.png`（0=背景，1..N 按配置顺序）；
-- `metadata.json` 里写明 `label_definition` 与 `depth_definition`，避免下游误读；
-- 裁剪是可选派生分支（`postprocess.crop_mode = tray_roi`），`crop_*` 前缀另存，并在保存前断言"裁剪不会切掉任何可见食材像素"。
+失败原因按 `FOOD_FAILURE_PRIORITY` 排序：`occlusion` < `food_cut_by_image_border` < `invalid_depth` < `insufficient_food_pixels`，保证归因稳定（不受 `set` 迭代顺序影响）。四个检查对每块食材都跑完，再统一去重排序，所以一次采集可以同时报多项原因。
 
 ---
 
@@ -586,18 +603,18 @@ raise RuntimeError('Position servo did not reach the configured settling criteri
 | # | 阶段 | 实现 | 可能原因 |
 |---:|---|---|---|
 | 1 | SAMPLE | `sample_rng` 抽 XY + `z_jitter_m` | — |
-| 2 | GEOMETRY | `geometry_check(target)` | `food_out_of_rgb_fov`、`depth_range`、`tilt`、`tray_ratio`… |
+| 2 | GEOMETRY | `feasibility.check(target)` | `food_out_of_rgb_fov`、`depth_range`、`tilt`、`tray_ratio`… |
 | 3 | 去重（提前） | 与已接受光轴比夹角 | `duplicate_axis` |
 | 4 | IK | `kin.solve(T_BF, seed)` | `ik_or_singularity` |
 | 5 | COLLISION | `world.collision(q)` | `self_collision`、`environment_collision`、`joint_limit` |
 | 6 | PATH | `motion.plan()` | `path_not_found` |
-| 7 | 实际位姿复核 | `set_q` → `camera_pose()` → `geometry_check(actual)` | `actual_*` |
+| 7 | 实际位姿复核 | `set_q` → `camera_pose()` → `feasibility.check(actual)` | `actual_*` |
 | 8 | CAPTURE/QUALITY | `inspect_capture()` | `occlusion`、`invalid_depth`… |
 | 9 | EXECUTE/SAVE | `world.execute(path)` + `save_capture` | 执行期碰撞抛 `RuntimeError` |
 
 第 3 步放在 IK **之前**：去重是一次点积，IK+碰撞+RRT 是毫秒到秒级。
 
-第 9 步之后还有一次**到位复核**：`execute` 结束后重新 `geometry_check` 与 `inspect_capture`，若不合格则把该候选记为 `moved=True` 的失败并推进 `current`。因为位置伺服到达的实际位姿与 IK 目标之间有微小差（`pe`、`re` 落盘），几何指标必须按**实际位姿**重算，不能复用预览值。
+第 9 步之后还有一次**到位复核**：`execute` 结束后重新 `feasibility.check` 与 `inspect_capture`（后者内部转给 `quality.assess`），若不合格则把该候选记为 `moved=True` 的失败并推进 `current`。因为位置伺服到达的实际位姿与 IK 目标之间有微小差（`pe`、`re` 落盘），几何指标必须按**实际位姿**重算，不能复用预览值。
 
 ---
 
@@ -670,6 +687,9 @@ sample_rng, ik_rng, path_rng, jitter_rng = [default_rng(s) for s in seeds]
 | 确定性边界 | `World.execute` | 采样/IK/路径逐位可复现；到位与像素允许极小量差 |
 | `model.geom_group` 被运行时改写 | `world.isolated_food_masks` | 有 `try/finally` 恢复，但若进程被杀会残留（仅影响当次进程） |
 | `renderer` 缓存不随分辨率释放 | `world.renderers` | 只按 `(w,h)` 缓存，`close()` 统一释放 |
+| 选择策略缺失 | `planner.run` | 仍是"先通过先接受"；`summary.view_ids_ranked_by_tray_ratio` 只做事后排序，不参与选择 |
+| 去重只保证两两分离 | `diversity` | `min_axis_angle_deg` 不保证方位/倾角覆盖均匀，也没有分布统计 |
+| 可见率默认不拦截 | `quality` | `visibility_mode = "report"` 只记录；改为 `enforce` 才拒绝 |
 
 ---
 

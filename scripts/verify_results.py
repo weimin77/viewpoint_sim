@@ -24,6 +24,10 @@ def verify(root):
             assert np.linalg.norm(T[:3,3]-target[:3,3])<cfg['robot']['ik_position_tolerance_m']
             assert abs(v['z_jitter_m'])<=cfg['sampling']['z_jitter_m']+1e-12
             assert abs(target[2,3]-cfg['roi']['tray_z_B_m']-v['base_height_above_tray_m']-v['z_jitter_m'])<1e-10
+            # The achieved height is the base plus the realised offset; this catches
+            # a planner that records the base height and silently drops the jitter.
+            assert abs(v['height_above_tray_m']-v['base_height_above_tray_m']-v['z_jitter_m'])<1e-12
+            assert abs(v['height_above_tray_m']-(v['T_BC_target'][2][3]-cfg['roi']['tray_z_B_m']))<1e-9
             assert feasibility_check(cfg,T,v['height_index'])[1] is None
             for i,a in axes:
                 if cfg['sampling']['deduplicate_across_heights'] or i==v['height_index']:

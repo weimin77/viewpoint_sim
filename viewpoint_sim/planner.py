@@ -44,10 +44,12 @@ def run(world, output):
                 candidate_id = f"h{height_index:02d}_c{attempts:04d}"
                 # Steps 1-2 live in pose_generation: planar sample + height +
                 # jitter, then Look-at at the ROI centre. Same draw order as
-                # before, so existing seeds still reproduce.
-                eye, target, actual_height, jitter = candidate_pose(
+                # before, so existing seeds still reproduce. candidate_pose
+                # returns the BASE height; the achieved height adds the jitter.
+                eye, target, base_height, jitter = candidate_pose(
                     cfg, height_index, sample_rng, jitter_rng)
                 eye = eye.tolist()
+                actual_height = base_height + jitter
                 state = dict(id=candidate_id,base_height_above_tray_m=h,height_above_tray_m=actual_height,z_jitter_m=jitter,eye_B_m=eye)
                 geometry, reason = feasibility_check(cfg,target,height_index)
                 capture, solution, path, ik_quality = None,None,None,None

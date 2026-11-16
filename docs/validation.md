@@ -1,6 +1,6 @@
 # 验证记录
 
-验证日期：2026-11-12。Linux、Python 3.12.14、MuJoCo 3.3.7，EGL 离屏渲染。
+验证日期：2026-11-16。Linux、Python 3.12.16、MuJoCo 3.3.7，EGL 离屏渲染。
 
 ## 场景与默认行为
 
@@ -32,7 +32,7 @@
 
 ## 自动验证
 
-13 项单元/集成测试全部通过，日志见 `tests_final.log`。覆盖：
+14 项单元/集成测试全部通过，日志见 `tests_final.log`。覆盖：
 
 - 官方网格毫米到米转换、URDF 与 MuJoCo 正运动学一致性。
 - Look-at 和法兰/相机变换、非居中相机内参。
@@ -41,7 +41,7 @@
 - 物理位置伺服稳定到位，以及状态与保存位姿的一致性。
 - 开放顶部、固定障碍物，以及终点安全但中间路径碰撞的反例。
 
-`scripts/verify_results.py` 另外对最终的 12 + 2 个采集结果逐一复核关节轨迹、光学位姿、图像对齐、扰动和裁剪状态，全部通过，见 `verify_final.log`。
+`scripts/verify_results.py` 另外对最终的 12 + 2 个采集结果逐一复核关节轨迹、光学位姿、图像对齐、扰动和裁剪状态，全部通过，见 `verify_final.log`。复核项包括 `height_above_tray_m == base_height_above_tray_m + z_jitter_m`，用于发现"只记录基准高度、漏掉扰动"这类错误。
 
 ## 预览与可复现性
 

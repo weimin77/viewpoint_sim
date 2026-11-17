@@ -7,7 +7,7 @@
 - 为什么改一处代码不会让历史上所有数据失效？
 - 输出的 `views.json` 里某个数字，是哪一行算出来的？
 
-配套文档：`docs/simulation_architecture.md` 讲**实现机制**（建模、渲染、碰撞的细节），本文讲**怎么学**、**概念怎么串**、**怎么动手验证**。两者交叉阅读。
+配套文档：`docs/simulation_architecture.md` 讲**实现机制**（建模、渲染、碰撞的细节），本文讲**怎么学**、**概念怎么串**、**怎么动手验证**。要上真机时读 `docs/real_robot_bringup.md`（标定、单位、符号、限位各自的实测影响）。三者交叉阅读。
 
 ---
 
@@ -1239,6 +1239,8 @@ R = T_BC[:3,:3] @ np.diag([1,-1,-1])
 | **加选择策略** | 新建 `selection.py`，`planner` 超额采集 + top-N | 高 | 是（行为改变）
 
  |
+
+**要上真机**：`kinematics.py` 的 FK/IK 数学可以照搬，但关节零位、符号、单位、限位必须在实机上标定 —— 见 `docs/real_robot_bringup.md`。整臂零位偏 0.2° 就会吃掉 `roi.margin_m` 的全部 3 mm 预算。
 
 **最重要的一条**：上表中「是否需要换基线」为「是」的改动，都意味着 `outputs/demo` 和 `outputs/jitter_and_crop` 不再是有效回归基线。这时候应该：
 

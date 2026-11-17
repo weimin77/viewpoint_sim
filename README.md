@@ -10,8 +10,9 @@
 
 - **`docs/learning_guide.md`** —— 学习和深入理解用的主文档：阅读顺序（分 4 遍）、四个必须建立的心智模型、逐模块精读路线、8 个可动手验证的实验、10 个易踩的坑、调试路线图、术语表。
 - **`docs/simulation_architecture.md`** —— 实现机制参考：MJCF 生成、渲染管线、碰撞模型、运动模型的细节。
+- **`docs/real_robot_bringup.md`** —— 从仿真到真机：哪些能直接搬、哪些必须重新标定、怎么验（含实测的误差敏感度数据）。
 
-建议先读 `learning_guide.md` 的 §0–§4（约 30 分钟）建立全局图，再按需查 `simulation_architecture.md`。
+建议先读 `learning_guide.md` 的 §0–§4（约 30 分钟）建立全局图，再按需查 `simulation_architecture.md`。要上真机先读 `real_robot_bringup.md`。
 
 ## 先查看已有结果
 

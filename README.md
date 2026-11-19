@@ -19,7 +19,7 @@
 无需安装依赖，直接打开：
 
 - `outputs/demo/report.html`：默认三高度采集、模型与 RGB-D/Mask 查看。
-- `outputs/demo/motion_preview.gif`：运动路径与相机画面的同步预览。
+- `outputs/demo/motion_preview.gif`：运动路径与相机画面的同步预览。**这个文件不是 `run` 生成的**，由 `replay --gif` 单独产出，见「生成预览动画」。
 - `outputs/jitter_and_crop/report.html`：启用 Z 扰动与可选裁剪的独立示例。
 
 报告自包含中文界面字体，不依赖联网脚本。默认未生成裁剪图时，裁剪按钮不可用。
@@ -93,6 +93,26 @@ MUJOCO_GL=egl .venv/bin/python -m viewpoint_sim run --headless --output outputs/
 若提示系统缺少 EGL/OpenGL 动态库，Ubuntu 可安装 `libegl1 libgl1 libgl1-mesa-dri`。`MUJOCO_GL=osmesa` 是可选软件渲染路线，需要系统提供 OSMesa。WSL 图形窗口需要可用的 WSLg。显示环境和远程服务器环境分别选择对应后端。
 
 本次实际验证的是 Linux EGL 离屏渲染与物理执行；交互窗口及 Windows 启动脚本需在本地图形环境运行。
+
+### 生成预览动画
+
+`motion_preview.gif` 由 `replay --gif` 产出，与 `run` 无关。这个模式**不打开任何窗口**（离屏渲染），逐视点打印进度，最后打印写出路径与大小：
+
+```bash
+.venv/bin/python -m viewpoint_sim replay --result outputs/demo \
+    --gif outputs/demo/motion_preview.gif
+```
+
+输出形如：
+
+```
+  [1/12] h00_c0001: 20 frames
+  ...
+  [12/12] h02_c0004: 108 frames
+Wrote outputs/demo/motion_preview.gif (110 frames, 5.7 MB)
+```
+
+全程约 26 秒。`--gif` 与 `--physics` 不能同时使用（GIF 帧取自运动学预览，不步进物理），同时给出会直接报错退出。
 
 ## Windows PowerShell
 

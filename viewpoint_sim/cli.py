@@ -43,6 +43,15 @@ def replay(result,gui=True,gif=None,physics=False,speed=1.0,controls=True):
     motion=cfg['motion']
     views=json.loads((root/'views.json').read_text(encoding='utf-8'))
     if not views:raise ValueError('No accepted views to replay')
+    if gif and physics:
+        # The gif frames come from the kinematic preview, which walks the path
+        # without stepping physics. Refusing is better than the silent no-op
+        # this used to be: --physics won the branch and no file was written.
+        raise ValueError('--gif renders the kinematic preview and cannot be combined with --physics')
+    if gif:
+        # A gif is a batch job: rendering is offscreen, so a window would only
+        # sit there asking to be closed while the file is already being written.
+        gui=False
     state=Playback(speed)
     panel=Controls(state) if (gui and controls and not gif) else None
     if panel is not None and not panel.ok:
@@ -86,9 +95,19 @@ def replay(result,gui=True,gif=None,physics=False,speed=1.0,controls=True):
                         aborted=True;break
                     if panel is not None:
                         panel.poll()
-                    if gif and frames:frames.extend([frames[-1].copy()]*2)
+                    if gif:
+                        # Rendering a gif takes ~20 s; without this the command
+                        # looks hung for the whole run.
+                        print(f"  [{index+1}/{len(views)}] {view['id']}: "
+                              f"{len(frames)} frames", flush=True)
+                        frames.extend([frames[-1].copy()]*2)
                 if gif:
-                    if frames:frames[0].save(gif,save_all=True,append_images=frames[1:],duration=120,loop=0,optimize=True)
+                    if not frames:
+                        raise RuntimeError('No frames were rendered for the gif')
+                    written=Path(gif);written.parent.mkdir(parents=True,exist_ok=True)
+                    frames[0].save(written,save_all=True,append_images=frames[1:],duration=120,loop=0,optimize=True)
+                    print(f"Wrote {written} ({len(frames)} frames, "
+                          f"{written.stat().st_size/1e6:.1f} MB)", flush=True)
                     break
                 if restarted:
                     # Drop this pass and start over now, without waiting for it
@@ -122,7 +141,8 @@ def main(argv=None):
     run.add_argument('--speed',type=float,default=4.0,help='GUI playback speed multiplier; 1.0 = realtime. Never affects recorded data')
     rep=sub.add_parser('replay',help='Replay saved joint paths')
     rep.add_argument('--result',default='outputs/demo');rep.add_argument('--headless',action='store_true')
-    rep.add_argument('--gif');rep.add_argument('--physics',action='store_true',help='Execute with MuJoCo position servos')
+    rep.add_argument('--gif',metavar='PATH',help='Write a preview animation here and exit; opens no window and cannot be combined with --physics')
+    rep.add_argument('--physics',action='store_true',help='Execute with MuJoCo position servos')
     rep.add_argument('--speed',type=float,default=4.0,help='GUI playback speed multiplier; 1.0 = realtime. Never affects recorded data')
     rep.add_argument('--no-controls',action='store_true',help='Do not open the speed/reset control window')
     check=sub.add_parser('check',help='Validate model, calibration settings, and initial collision')

@@ -113,10 +113,20 @@ class MuJoCoWorldTests(unittest.TestCase):
         np.testing.assert_allclose(w.camera_pose(),w.kin.fk(w.q)@w.mount,atol=1e-9)
 
     def test_fixed_obstacle_changes_feasibility(self):
-        q=np.array([-.132839,1.14791,-1.14529,1.55486,-1.66197,.13358])
-        # Recompute the accurate official-URDF target solution before testing.
-        ss=self.world.kin.solve(self.T@inv(self.world.mount),q,np.random.default_rng(0),self.cfg['robot'])
-        q=next(q for q,_ in ss if self.world.collision(q) is None)
+        # Any reachable, collision-free pose will do. Search for one instead of
+        # assuming a fixed pose stays inside the workspace - moving the robot
+        # base changes reach, and this test is about obstacles, not about reach.
+        seed=np.array(self.cfg['robot']['home_q_rad'])
+        rng=np.random.default_rng(0)
+        q=None
+        for eye in ([.35,.03,.455],[.35,0,.42],[.33,.02,.40],[.35,0,.38],[.32,0,.36]):
+            T=look_at(eye,[.35,0,.13])
+            for cand,_ in self.world.kin.solve(T@inv(self.world.mount),seed,rng,
+                                              self.cfg['robot']):
+                if self.world.collision(cand) is None:
+                    q=cand;break
+            if q is not None:break
+        self.assertIsNotNone(q,'no reachable collision-free pose found for the fixture test')
         self.world.set_q(q)
         location=self.world.data.xpos[self.world.model.body('camera_housing').id].copy().tolist()
         c=copy.deepcopy(self.cfg)

@@ -7,7 +7,7 @@
     "srdf": "assets/mycobot_pro_630/mycobot.srdf",
     "flange_link": "link6",
     "base_position_B_m": [
-      0,
+      -0.14,
       0,
       0
     ],
@@ -295,7 +295,7 @@
       ],
       "z_B_m": [
         0.005,
-        0.65
+        0.45
       ],
       "wall_thickness_m": 0.014,
       "rack_z_B_m": 0.071,

@@ -28,7 +28,7 @@ examples/xy_sampling/
 # 只要图片不要 GIF
 .venv/bin/python examples/xy_sampling/sample_xy.py --no-gif
 
-# 自证：用同一种子重算，与已有真实运行结果逐点比对
+# 自证：用同一种子重算，与真实运行的每次尝试逐点比对（前缀检查，见下文）
 .venv/bin/python examples/xy_sampling/sample_xy.py --verify outputs/demo
 ```
 
@@ -70,7 +70,7 @@ z = tray_z + h + jitter
 
 生产代码在 `viewpoint_sim/planner.py` 的 `run()` 里做同样两次抽取，用的是
 `SeedSequence(seed).spawn(4)` 的第 0 和第 3 路随机流。本示例照搬这个 spawn 顺序，
-所以 `--verify` 能对得上。
+所以两边的前若干次尝试逐位相同（具体能对多少，见下文 `--verify` 的说明）。
 
 ### ② `pose_from_eye()` —— 朝向
 
@@ -148,19 +148,23 @@ if any(angle_deg(T_BC[:3, 2], d) < min_axis_angle_deg for d in compare):
 也就是说：**本示例产出的是"几何上成立的候选"，不是"机器人能拍到的视点"。**
 后四步必须靠 MuJoCo，也正是本示例刻意排除的部分——把采样看清，不该被 IK 噪声干扰。
 
-默认配置下二者结果完全一致（12 次尝试全部接受、0 拒绝），所以：
+`--verify` 是**前缀比对**，不是全等比对，这是共用随机流的必然结果：
 
 ```bash
 .venv/bin/python examples/xy_sampling/sample_xy.py --verify outputs/demo
-# 12 matched, 0 mismatched
+# 5 leading attempt(s) identical out of 13 sampled / 68 attempted
+#   diverges at h01_c0001: ...
 ```
 
-这条命令是把每个接受视点的 `eye_B_m` 与 `outputs/demo/views.json` 里
-`T_BC_target` 的平移列按 `id` 比对（容差 1e-9）。**它证明本示例复现的是生产流程的
-采样序列，而不是另写了一套"看起来像"的代码。**
+原因：生产代码整轮共用一个 `sample_rng`，每次尝试抽 2 个数。只要某一层因为 IK/碰撞/
+质检多试了几次，后面所有层的抽样序列就整体后移。本示例只跑几何门，接受计数一旦与生产
+不同，后续自然对不上。
 
-换成别的种子或别的配置，比对自然会失败——那是预期行为，`--verify` 只在
-"配置与 `views.json` 出自同一次运行"时有意义。
+比对对象是 `candidates.jsonl`（每次尝试一行，含被拒的），因为只有它记录了全量尝试；
+`views.json` 只有被接受的，无法逐次对齐。
+
+一次运行里如果没有任何 IK/碰撞/质检拒绝，前缀会覆盖全部尝试——那就是全等。
+另外，`--verify` 只在「配置与结果目录出自同一次运行」时有意义。
 
 ---
 

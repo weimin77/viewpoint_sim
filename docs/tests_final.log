@@ -32,6 +32,6 @@ test_reset_during_pause_raises_restart (test_playback.StepTests.test_reset_durin
 test_reset_raises_restart_immediately (test_playback.StepTests.test_reset_raises_restart_immediately) ... ok
 
 ----------------------------------------------------------------------
-Ran 31 tests in 2.139s
+Ran 31 tests in 2.553s
 
 OK

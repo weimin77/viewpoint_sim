@@ -227,10 +227,18 @@ graph TD
 **实测这道流水线的漏斗**（`outputs/demo`）：
 
 ```
-12 次尝试 → 12 次接受（100%）
+68 次尝试 → 12 次接受（17.6%）
+  261mm  层: 13 次尝试  拒绝 ik_or_singularity 2, food_out_of_rgb_fov 7
+  360mm  层: 19 次尝试  拒绝 ik_or_singularity 12, duplicate_axis 3
+  420mm  层: 36 次尝试  拒绝 ik_or_singularity 26, duplicate_axis 4, depth_range 2
 ```
 
-默认配置下漏斗几乎不过滤。要看到它真正起作用，跑 `configs/jitter_and_crop.json`（3 次尝试，1 次 `ik_or_singularity` 拒绝）。
+这里是**当前配置**（基座后移 140 mm、侧壁顶 0.45 m、最低高度 261 mm）的实测。
+换成更宽松的场景，或把 `heights_above_tray_m` 调回 300/360/420 并让基座回原位，
+漏斗会几乎不过滤（旧基线下 12 次尝试 12 次接受）。**漏斗的松紧由场景决定，不是定值。**
+
+要单独看某一道门起作用，`configs/jitter_and_crop.json` 是更小的例子（8 次尝试，
+6 次 `ik_or_singularity`）。
 
 ### 2.4 模型四：确定性 = 四条独立随机流
 
@@ -523,7 +531,7 @@ crop_box(food_uv, tray_uv, camera, padding)
 `clip_polygon` 是**凸多边形**裁剪，对四个边界各切一次。`tray_ratio` 就是「托盘占画面多少」——这个指标在报告里叫「烤盘占比」。
 
 > **实物验证**：`outputs/demo` 三个高度的平均 tray_ratio 是
-> `300mm → 0.3146`、`360mm → 0.2305`、`420mm → 0.1709`。
+> `261mm → 0.4263`、`360mm → 0.2335`、`420mm → 0.1714`。
 > 越低越近，占比越大，符合直觉。
 
 **④ 两个派生函数**
@@ -584,7 +592,8 @@ z = cfg["roi"]["tray_z_B_m"] + heights[height_index] + delta
 > ```bash
 > .venv/bin/python examples/xy_sampling/sample_xy.py --verify outputs/demo
 > ```
-> 它会输出 `topview.png`、`sampling.gif`、`frustum_*.png`，并校对 12 个视点的 eye 坐标与 `views.json` 一致（1e-9）。
+> 它会输出 `topview.png`、`sampling.gif`、`frustum_*.png`，并把**每次尝试**的 eye 坐标与
+> 结果的 `candidates.jsonl` 逐点比对（容差 1e-9）。
 
 #### `feasibility.py`（140 行）
 
@@ -632,8 +641,12 @@ angle_deg(a, b) < min_axis_angle_deg   →  判定为同一个视点
 
 **它的局限要清楚**：只保证**两两分离**，不保证方位/倾角分布均匀。全工程唯一的覆盖度反馈是 `min_pairwise_angle_deg`——一个数字。
 
-> **实测**：`outputs/demo` 的 `minimum_axis_angle_deg = 5.821°`，而阈值是 `6°`。
-> 差 0.18° 说明**去重门槛确实是紧约束**（几乎贴着阈值过的）。
+> **实测**：`outputs/demo` 的同层内部最小夹角是 `7.079° / 6.814° / 6.311°`，
+> 阈值 `6°` —— 都刚过线，说明**去重门槛在每层内部确实是紧约束**。
+>
+> 注意别拿 `summary.minimum_axis_angle_deg`（本组 `3.231°`）来判断：它是**跨全部高度**
+> 的最小值，而 `deduplicate_across_heights=false` 时不同层本就可以共用方向。用它评估
+> 去重是否生效会得出错误结论。
 
 ---
 
@@ -830,8 +843,7 @@ if stable >= required:   # required = settle_hold_s/dt = 0.1/0.002 = 50 步
 
 连续 50 步满足才算稳定。**为什么不看「首次进入」**：过冲或抖动时可能瞬间穿过窗口，单次采样会被骗。
 
-> **实测**（`outputs/demo`）：19912 个物理步数 = 39.8 s 仿真时长。
-> 其中 **36.3 s 是机械臂运动**，3.5 s 是稳定保持。
+> **实测**（`outputs/demo`）：16646 个物理步 = 33.3 s 仿真时长（步长 2 ms）。
 
 ---
 
@@ -1083,7 +1095,9 @@ EOF
 .venv/bin/python examples/xy_sampling/sample_xy.py --verify outputs/demo
 ```
 
-**预期**：31 OK；两份数据集 PASS；`12 matched, 0 mismatched`。
+**预期**：31 OK；两份数据集 PASS；`--verify` 报告前若干次尝试完全一致。
+当前场景下是 `5 leading attempt(s) identical`，之后因为生产流程开始拒绝候选（IK 奇异）、
+共用 `sample_rng` 的抽样序列整体后移而发散——**这是预期行为**，不是失败。
 
 ---
 
@@ -1282,19 +1296,21 @@ bash scripts/setup.sh                       # 首次
 
 ```
 outputs/demo（configs/default.json）
-  12 个视点，每高度 4 个，100% 接受率（12 次尝试 12 次成功）
-  minimum_axis_angle_deg = 5.821°（阈值 6°）
-  托盘占比：300mm → 0.3146，360mm → 0.2305，420mm → 0.1709
-  位置误差最大 0.141 mm，旋转误差最大 0.023°
-  物理步数 19912（≈39.8 s 仿真时长）
-  elapsed 9.0 s
+  12 个视点，每高度 4 个，complete=true（13 + 19 + 36 = 68 次尝试）
+  同层内部最小光轴夹角 7.079° / 6.814° / 6.311°（阈值 6°）
+  summary.minimum_axis_angle_deg = 3.231°（这是跨高度的值，去重按层做）
+  托盘占比：261mm → 0.4263，360mm → 0.2335，420mm → 0.1714
+  位置误差最大 0.177 mm，旋转误差最大 0.024°
+  物理步数 16646（≈33.3 s 仿真时长）
+  elapsed 20.4 s
 
 outputs/jitter_and_crop（configs/jitter_and_crop.json）
   2 个视点，基准 330 mm，±8 mm 扰动
-  3 次尝试，1 次 ik_or_singularity 拒绝
-  minimum_axis_angle_deg = 18.606°
-  物理步数 5805
-  elapsed 2.6 s
+  8 次尝试，6 次 ik_or_singularity 拒绝
+  实际扰动 +5.096 mm / -0.094 mm
+  minimum_axis_angle_deg = 15.023°
+  物理步数 5332
+  elapsed 3.9 s
 ```
 
 把这些数字记住，你就能在第一次运行后立刻发现「哪里不对」。

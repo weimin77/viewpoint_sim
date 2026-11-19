@@ -2,7 +2,7 @@
   "schema_version": 2,
   "engine": "mujoco",
   "robot_model": "myCobot Pro 630",
-  "created_utc": "2026-11-19T07:35:46.592922+00:00",
+  "created_utc": "2026-11-19T08:54:53.305782+00:00",
   "seed": 20261112,
   "complete": true,
   "accepted_total": 2,
@@ -20,7 +20,7 @@
     }
   ],
   "minimum_axis_angle_deg": 15.022936624628043,
-  "elapsed_seconds": 3.9385116749981535,
+  "elapsed_seconds": 4.141292148997309,
   "simulation_limits": [
     "Example inertias/servo gains, not calibrated hardware dynamics",
     "Ideal aligned undistorted RGB-D; no stereo matching/noise/material physics",

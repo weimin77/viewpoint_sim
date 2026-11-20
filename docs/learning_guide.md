@@ -817,6 +817,31 @@ for _ in range(100):
 
 > **关键澄清**：`rrt_step_rad` **不影响碰撞保真度**。`edge_free` 用的是独立的 `edge_resolution_rad = 0.025`，每条边无论多长都按 0.025 逐点检查。这个解耦是设计得好的地方。
 
+#### 碰撞裕度：`collision_margin_m` 才是「代码保证的间隙」
+
+`motion.collision_margin_m` 是这个工程里**唯一一个真正被强制执行的安全数字**。
+`Checker.violation()` 的判据是 `mj_geomDistance(...) < margin_m`，所以无论采样区域
+怎么改，只要视点被接受，机械臂上每个 geom 到每个场景 geom 的距离就一定大于这个值。
+
+当前值 **10 mm**（旧值 2 mm）。这个上限是量出来的，不是拍的：
+
+```
+把 margin 逐档提高，用生产代码的 Checker 复核 60 个可行姿态 + 3449 个路径采样点
+   10 mm  → 0 处违规
+   12 mm  → 全部违规
+二分出来的临界值 = 10.5000 mm（60 个姿态全部失败）
+唯一的越界对 = col_link5 <-> col_camera_bracket
+```
+
+`col_link5` 和 `col_camera_bracket` **都刚性固定在 link5 上**，所以这个 10.5 mm 是
+与构型无关的常数，不是机械臂「快撞上了」。也就是说：
+
+> **单一全局裕度的物理上限就是 10.5 mm。** 想再提高，必须把
+> `Checker` 的一个裕度拆成 `self_collision_margin_m` 和
+> `environment_collision_margin_m` 两个。
+
+`scripts/audit_clearance.py` 可以重跑上面这张表。
+
 #### `execution.py`（154 行）
 
 两条循环，共用一张时间表：
@@ -843,7 +868,7 @@ if stable >= required:   # required = settle_hold_s/dt = 0.1/0.002 = 50 步
 
 连续 50 步满足才算稳定。**为什么不看「首次进入」**：过冲或抖动时可能瞬间穿过窗口，单次采样会被骗。
 
-> **实测**（`outputs/demo`）：16646 个物理步 = 33.3 s 仿真时长（步长 2 ms）。
+> **实测**（`outputs/demo`）：13106 个物理步 = 26.2 s 仿真时长（步长 2 ms）。
 
 ---
 
@@ -1300,17 +1325,17 @@ outputs/demo（configs/default.json）
   同层内部最小光轴夹角 7.079° / 6.814° / 6.311°（阈值 6°）
   summary.minimum_axis_angle_deg = 3.231°（这是跨高度的值，去重按层做）
   托盘占比：261mm → 0.4263，360mm → 0.2335，420mm → 0.1714
-  位置误差最大 0.177 mm，旋转误差最大 0.024°
-  物理步数 16646（≈33.3 s 仿真时长）
-  elapsed 20.4 s
+  位置误差最大 0.160 mm，旋转误差最大 0.024°
+  物理步数 13106（≈26.2 s 仿真时长）
+  elapsed 18.7 s
 
 outputs/jitter_and_crop（configs/jitter_and_crop.json）
   2 个视点，基准 330 mm，±8 mm 扰动
   8 次尝试，6 次 ik_or_singularity 拒绝
   实际扰动 +5.096 mm / -0.094 mm
-  minimum_axis_angle_deg = 15.023°
-  物理步数 5332
-  elapsed 3.9 s
+  minimum_axis_angle_deg = 15.026°
+  物理步数 2454
+  elapsed 3.2 s
 ```
 
 把这些数字记住，你就能在第一次运行后立刻发现「哪里不对」。

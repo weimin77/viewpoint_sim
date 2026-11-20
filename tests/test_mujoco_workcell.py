@@ -139,13 +139,15 @@ class MuJoCoWorldTests(unittest.TestCase):
 
 class PathTests(unittest.TestCase):
     def test_safe_endpoints_do_not_prove_the_edge_safe(self):
+        # The edge sweeps joint2, not joint1. With the wrist folded back towards
+        # the base, a joint1 rotation barely translates the camera housing, so a
+        # mid-edge obstacle large enough to block the edge also ends up inside
+        # the collision margin at the endpoints. Shoulder pitch moves the wrist
+        # far enough that both endpoints stay clear.
         c=load_config();c['scene']['oven']['enabled']=False;c['scene']['foods']=[]
         with World(c) as w:
-            a=w.q;b=a.copy();b[0]+=.8;w.set_q((a+b)/2)
+            a=w.q.copy();b=a.copy();b[1]+=.8;w.set_q((a+b)/2)
             location=w.data.xpos[w.model.body('camera_housing').id].copy().tolist()
-        c['scene']['obstacles'].append(dict(name='mid_edge_obstacle',position_B_m=location,size_m=[.035,.035,.035]))
+        c['scene']['obstacles'].append(dict(name='mid_edge_obstacle',position_B_m=location,size_m=[.03,.03,.03]))
         with World(c) as w:
             self.assertIsNone(w.collision(a));self.assertIsNone(w.collision(b));self.assertFalse(edge_free(w,a,b))
-
-
-if __name__=='__main__':unittest.main()

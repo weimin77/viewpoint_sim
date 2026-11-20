@@ -106,10 +106,10 @@ MUJOCO_GL=egl .venv/bin/python -m viewpoint_sim run --headless --output outputs/
 输出形如：
 
 ```
-  [1/12] h00_c0001: 20 frames
+  [1/12] h00_c0002: 7 frames
   ...
-  [12/12] h02_c0004: 108 frames
-Wrote outputs/demo/motion_preview.gif (110 frames, 5.7 MB)
+  [12/12] h02_c0036: 81 frames
+Wrote outputs/demo/motion_preview.gif (83 frames, 3.6 MB)
 ```
 
 全程约 26 秒。`--gif` 与 `--physics` 不能同时使用（GIF 帧取自运动学预览，不步进物理），同时给出会直接报错退出。
